@@ -1,0 +1,2327 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>IMU Auth · coleta e painel v9</title>
+<meta name="description" content="Coleta de dados inerciais no iPhone e painel do preprint v9: SPRT, CUSUM, posterior de Shiryaev, portão por valor e testes.">
+<meta name="theme-color" content="#f4f6f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0f14" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IMU Auth">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d9488'/%3E%3Crect x='22' y='12' width='20' height='40' rx='5' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M8 40h8l4-8 6 16 4-10h26' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='.85'/%3E%3C/svg%3E">
+<style>
+/* Direção: instrumento de laboratório nativo iOS — superfícies calmas, tipografia SF, números tabulares, cor semântica. */
+:root{
+  color-scheme:light;
+  --bg:#f2f4f8;--bg2:#e7ebf2;--panel:#ffffff;--panel2:#f7f9fc;--glass:rgba(255,255,255,.82);
+  --line:rgba(15,23,36,.08);--line2:rgba(15,23,36,.15);--fg:#0b121b;--fg2:#2d3a4b;--muted:#64748b;
+  --accent:#0d9488;--accent-2:#0f766e;--accent-soft:rgba(13,148,136,.11);
+  --good:#16a34a;--good-soft:rgba(22,163,74,.11);--warn:#d97706;--warn-soft:rgba(217,119,6,.12);
+  --bad:#dc2626;--bad-soft:rgba(220,38,38,.10);--info:#2563eb;--info-soft:rgba(37,99,235,.10);--violet:#7c3aed;
+  --rec:#ef4444;--rec-ink:#dc2626;--on-accent:#ffffff;
+  --shadow-1:0 1px 3px rgba(11,18,27,.04),0 4px 12px -2px rgba(11,18,27,.03);
+  --shadow-2:0 14px 34px -10px rgba(11,18,27,.16),0 2px 6px rgba(11,18,27,.05);
+  --r-s:10px;--r-m:14px;--r-l:20px;
+  --tap:44px;--bar-h:64px;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#090d12;--bg2:#111720;--panel:#131a24;--panel2:#18212e;--glass:rgba(19,26,36,.78);
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--fg:#f1f5f9;--fg2:#cbd5e1;--muted:#8b9bb0;
+  --accent:#2dd4bf;--accent-2:#14b8a6;--accent-soft:rgba(45,212,191,.13);
+  --good:#4ade80;--good-soft:rgba(74,222,128,.13);--warn:#fbbf24;--warn-soft:rgba(251,191,36,.13);
+  --bad:#f87171;--bad-soft:rgba(248,113,113,.13);--info:#60a5fa;--info-soft:rgba(96,165,250,.13);--violet:#c4b5fd;
+  --rec:#ff5257;--rec-ink:#dc2626;--on-accent:#04201c;
+  --shadow-1:0 1px 0 rgba(255,255,255,.04) inset,0 4px 16px -4px rgba(0,0,0,.4);
+  --shadow-2:0 20px 44px -16px rgba(0,0,0,.75);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#090d12;--bg2:#111720;--panel:#131a24;--panel2:#18212e;--glass:rgba(19,26,36,.78);
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--fg:#f1f5f9;--fg2:#cbd5e1;--muted:#8b9bb0;
+  --accent:#2dd4bf;--accent-2:#14b8a6;--accent-soft:rgba(45,212,191,.13);
+  --good:#4ade80;--good-soft:rgba(74,222,128,.13);--warn:#fbbf24;--warn-soft:rgba(251,191,36,.13);
+  --bad:#f87171;--bad-soft:rgba(248,113,113,.13);--info:#60a5fa;--info-soft:rgba(96,165,250,.13);--violet:#c4b5fd;
+  --rec:#ff5257;--rec-ink:#dc2626;--on-accent:#04201c;
+  --shadow-1:0 1px 0 rgba(255,255,255,.04) inset,0 4px 16px -4px rgba(0,0,0,.4);
+  --shadow-2:0 20px 44px -16px rgba(0,0,0,.75);
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  background-image:radial-gradient(900px 420px at 50% -120px,var(--accent-soft),transparent 65%);
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);min-height:100dvh;-webkit-font-smoothing:antialiased}
+h1{font:700 1.05rem/1.15 var(--display);margin:0;letter-spacing:-.02em}
+h2{font:650 .98rem/1.3 var(--display);margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:-.015em}
+h2 small{font-weight:500;font-size:.78rem}
+h3{font-size:.72rem;margin:16px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:650}
+p{margin:.4em 0}
+small,.muted{color:var(--muted)}
+.small{font-size:.83rem;line-height:1.45}
+code,.mono{font-family:var(--mono);font-size:.91em;font-variant-numeric:tabular-nums}
+a{color:var(--accent);text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+
+/* ---------- app bar ---------- */
+.appbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
+  padding:calc(env(safe-area-inset-top) + 8px) 16px 8px;background:var(--glass);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--line2)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.logo{flex:0 0 32px;height:32px;border-radius:9px;background:linear-gradient(145deg,var(--accent),var(--accent-2));display:grid;place-items:center;box-shadow:0 3px 10px -3px var(--accent)}
+.logo svg{width:19px;height:19px;fill:none;stroke:var(--on-accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brandtxt{min-width:0}
+.sub{color:var(--muted);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recchip{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:5px 11px;min-height:30px;background:var(--rec-ink);color:#fff;font:600 .8rem var(--mono);cursor:pointer;box-shadow:0 4px 12px -3px var(--rec)}
+.recchip .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.2s steps(2,end) infinite}
+@keyframes blink{50%{opacity:.25}}
+
+/* ---------- segmented controls ---------- */
+.seg{display:inline-flex;padding:3px;gap:2px;border-radius:11px;background:var(--bg2);border:.5px solid var(--line2)}
+.seg button{border:0;background:transparent;color:var(--fg2);padding:5px 11px;min-height:30px;border-radius:8.5px;font:600 .82rem var(--sans);cursor:pointer;transition:background .18s var(--ease),color .18s var(--ease),box-shadow .18s var(--ease);touch-action:manipulation}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.1),0 0 0 .5px var(--line)}
+.seg.theme button{padding:4px 8px;font-size:.75rem;min-height:28px}
+.seg.big{display:flex;width:100%}
+.seg.big button{flex:1;min-height:var(--tap);font-size:.9rem;padding:6px 6px;white-space:nowrap}
+#cl-holder button[data-v="owner"][aria-pressed="true"],#sn-label-owner[aria-pressed="true"]{background:var(--good);color:#fff;border-color:var(--good)}
+#cl-holder button[data-v="other"][aria-pressed="true"],#sn-label-other[aria-pressed="true"]{background:var(--bad);color:#fff;border-color:var(--bad)}
+:root[data-theme="dark"] #cl-holder button:is([data-v="owner"],[data-v="other"])[aria-pressed="true"],
+:root[data-theme="dark"] :is(#sn-label-owner,#sn-label-other)[aria-pressed="true"]{color:#04150a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #cl-holder button:is([data-v="owner"],[data-v="other"])[aria-pressed="true"],
+:root:not([data-theme="light"]) :is(#sn-label-owner,#sn-label-other)[aria-pressed="true"]{color:#04150a}}
+
+/* ---------- tabs: barra superior no desktop, tab bar nativa iOS no iPhone ---------- */
+nav.tabs{position:sticky;top:var(--appbar-h,calc(env(safe-area-inset-top) + 49px));z-index:25;display:flex;gap:4px;justify-content:center;padding:7px 16px;background:var(--glass);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--line2)}
+nav.tabs button{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--muted);border-radius:10px;padding:7px 13px;min-height:36px;font:600 .86rem var(--sans);cursor:pointer;transition:color .15s,background .15s;touch-action:manipulation}
+nav.tabs button:hover{color:var(--fg);background:var(--bg2)}
+nav.tabs svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs svg .fill{fill:currentColor;stroke:none}
+nav.tabs button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
+nav.tabs button[data-tab="collect"][aria-selected="true"] svg .fill{fill:var(--rec)}
+
+.wrap{max-width:1120px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom));display:grid;gap:14px}
+.tabpanel{display:grid;gap:14px;animation:fade .22s var(--ease)}
+@keyframes fade{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- surfaces ---------- */
+.card{background:var(--panel);border:.5px solid var(--line2);border-radius:var(--r-l);padding:16px 18px;box-shadow:var(--shadow-1);min-width:0}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}
+.status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.spacer{flex:1}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.actionsrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ---------- badges, metrics ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3.5px 10px;font-weight:650;font-size:.76rem;border:.5px solid transparent;white-space:nowrap;letter-spacing:-.01em}
+.badge.ok{background:var(--good-soft);color:var(--good)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.badge.info{background:var(--info-soft);color:var(--info)}
+.badge.neutral{background:var(--panel2);color:var(--muted);border-color:var(--line2)}
+.badge.rec{background:var(--rec-ink);color:#fff}
+.metric{background:var(--panel2);border:.5px solid var(--line2);border-radius:var(--r-m);padding:11px 12px;display:grid;gap:5px;align-content:start}
+.metric .k{font-size:.69rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:650}
+.metric .k .sym{text-transform:none;font-size:.82rem;color:var(--fg2)}
+.metric .v{font:650 1.24rem/1.15 var(--mono);letter-spacing:-.025em}
+.metric .d{font-size:.75rem;color:var(--muted);line-height:1.38}
+.bar{height:5px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .28s var(--ease);border-radius:99px}
+.bar.warn i{background:var(--warn)}.bar.bad i{background:var(--bad)}
+
+/* ---------- actions ---------- */
+.action{border:.5px solid var(--line2);border-radius:var(--r-m);padding:13px;display:grid;gap:8px;background:var(--panel2);transition:border-color .2s,background .2s}
+.action .t{font-weight:700;font-size:.92rem;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.action .why{font-size:.82rem;color:var(--fg2);line-height:1.4}
+.action.ok{border-color:color-mix(in srgb,var(--good) 50%,var(--line2))}.action.no{border-color:color-mix(in srgb,var(--warn) 55%,var(--line2))}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:.5px solid var(--line2);background:var(--panel);color:var(--fg);border-radius:12px;padding:9px 14px;min-height:40px;font:600 .88rem var(--sans);cursor:pointer;transition:transform .1s var(--ease),background .15s,border-color .15s,box-shadow .15s;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn:hover{border-color:var(--muted)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:0 4px 14px -6px var(--accent)}
+.btn.danger{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 45%,transparent);color:var(--bad)}
+.btn.good{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 45%,transparent);color:var(--good)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.sm{padding:6px 11px;min-height:34px;font-size:.81rem;border-radius:10px}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ---------- forms ---------- */
+.ctrl{display:grid;gap:5px;margin:4px 0;padding:8px 10px;background:var(--panel2);border-radius:var(--r-s);border:.5px solid var(--line)}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-size:.83rem;gap:8px;color:var(--fg2)}
+.ctrl label b{font-family:var(--mono);font-weight:600;font-size:.8rem;color:var(--fg);white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--accent);height:26px;margin:0}
+select,input[type=number],input[type=text],textarea{font:inherit;font-size:16px;background:var(--panel2);color:var(--fg);border:.5px solid var(--line2);border-radius:12px;padding:9px 12px;max-width:100%;min-height:var(--tap);width:100%;transition:border-color .15s,box-shadow .15s}
+textarea{resize:vertical;min-height:64px}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.toggle input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.inline-l{display:inline-flex;align-items:center;gap:8px}
+.inline-l input{width:132px;min-height:36px;padding:6px 10px}
+.form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
+.fl{display:grid;gap:5px;font-size:.82rem;color:var(--fg2);font-weight:550}
+.fl.wide{grid-column:1/-1}
+.field{display:grid;gap:7px;margin:0 0 14px}
+.flabel{font-size:.71rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:650}
+.inline{display:flex;gap:8px}
+.inline input{flex:1;min-width:0}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chips button{border:.5px solid var(--line2);background:var(--panel2);color:var(--fg2);border-radius:999px;padding:7px 14px;min-height:38px;font:600 .84rem var(--sans);cursor:pointer;transition:all .15s var(--ease);touch-action:manipulation}
+.chips button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 3px 10px -4px var(--accent)}
+.toggles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:4px 12px;padding-top:6px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:.85rem;cursor:pointer;min-height:38px;user-select:none;-webkit-user-select:none}
+.toggle input{appearance:none;-webkit-appearance:none;flex:0 0 42px;width:42px;height:25px;border-radius:999px;background:var(--line2);position:relative;cursor:pointer;transition:background .2s var(--ease);margin:0}
+.toggle input::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+.toggle input:checked{background:var(--accent)}
+.toggle input:checked::after{transform:translateX(17px)}
+#c-gate:checked{background:var(--bad)}
+
+/* ---------- collapsibles ---------- */
+details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0;padding:4px 28px 4px 0;position:relative;min-height:40px;user-select:none;-webkit-user-select:none}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary h2{margin:0}
+details.fold>summary::after{content:"";position:absolute;right:4px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-65%) rotate(45deg);transition:transform .2s var(--ease)}
+details.fold[open]>summary::after{transform:translateY(-25%) rotate(-135deg)}
+details.fold[open]>summary{margin-bottom:12px}
+details.sub-fold{margin-top:10px;border-top:.5px solid var(--line2);padding-top:6px}
+details.sub-fold>summary{list-style:none;cursor:pointer;font-size:.84rem;font-weight:600;color:var(--fg2);min-height:34px;display:flex;align-items:center;justify-content:space-between;user-select:none;-webkit-user-select:none}
+details.sub-fold>summary::-webkit-details-marker{display:none}
+details.sub-fold>summary::after{content:"▾";color:var(--muted);font-size:.8rem;transition:transform .2s var(--ease)}
+details.sub-fold[open]>summary::after{transform:rotate(180deg)}
+
+/* ---------- charts ---------- */
+canvas.chart{width:100%;height:146px;display:block;border-radius:var(--r-s);background:var(--panel2);border:.5px solid var(--line2)}
+canvas.chart.scene{height:300px;touch-action:none;cursor:grab;background:radial-gradient(ellipse at 50% 25%,var(--panel),var(--panel2))}
+canvas.chart.scene:active{cursor:grabbing}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);margin:10px 0 5px;align-items:center}
+.legend:first-of-type{margin-top:4px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2.5px;margin-right:5px;vertical-align:-1px}
+
+/* ---------- log ---------- */
+.log{list-style:none;margin:0;padding:0;font-size:.82rem;max-height:220px;overflow:auto;display:grid;gap:2px;-webkit-overflow-scrolling:touch}
+.log li{display:flex;gap:10px;border-bottom:.5px solid var(--line);padding:6px 0;align-items:baseline}
+.log li:last-child{border-bottom:0}
+.log li time{font-family:var(--mono);color:var(--muted);flex:0 0 54px;font-size:.76rem}
+.log li.bad{color:var(--bad)}.log li.good{color:var(--good)}.log li.warn{color:var(--warn)}
+.log.compact{max-height:140px;margin-top:8px}
+.log.compact:empty{display:none}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th,td{text-align:left;padding:9px 8px;border-bottom:.5px solid var(--line2);vertical-align:top}
+th{color:var(--muted);font-weight:650;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pass{color:var(--good);font-weight:700}.fail{color:var(--bad);font-weight:700}.pend{color:var(--muted)}
+
+/* ---------- notes, kv, steps ---------- */
+.note{border:.5px solid color-mix(in srgb,var(--accent) 35%,transparent);background:var(--accent-soft);padding:10px 13px;border-radius:var(--r-m);font-size:.84rem;line-height:1.45}
+.note.warn{border-color:color-mix(in srgb,var(--warn) 35%,transparent);background:var(--warn-soft)}
+.note.bad{border-color:color-mix(in srgb,var(--bad) 35%,transparent);background:var(--bad-soft)}
+.note .btn{margin-top:8px}
+.kv{display:grid;grid-template-columns:minmax(108px,auto) 1fr;gap:6px 12px;font-size:.83rem;margin:8px 0 0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere}
+.steps{display:grid;gap:8px;counter-reset:s}
+.step{display:flex;gap:12px;align-items:flex-start;padding:12px 13px;border:.5px solid var(--line2);border-radius:var(--r-m);background:var(--panel2)}
+.step::before{counter-increment:s;content:counter(s);flex:0 0 24px;height:24px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:.76rem;margin-top:1px}
+.step.done::before{background:var(--good);content:"✓"}
+.step .b{flex:1;min-width:0;font-size:.86rem;line-height:1.45}
+.howto{margin:0;padding-left:18px;display:grid;gap:8px;font-size:.86rem;color:var(--fg2);line-height:1.45}
+.tapzone{border:1.5px dashed var(--line2);border-radius:var(--r-m);min-height:110px;display:grid;place-items:center;color:var(--muted);user-select:none;-webkit-user-select:none;touch-action:manipulation;text-align:center;padding:12px;font-weight:600;font-size:.88rem;background:var(--panel2);cursor:pointer;transition:background .18s,border-color .18s,transform .1s}
+.tapzone:active{transform:scale(.985)}
+.tapzone.hit{border-style:solid;border-color:var(--good);background:var(--good-soft);color:var(--good)}
+.tapzone.miss{border-style:solid;border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.verdict-tag{display:inline-block;font-size:.71rem;font-weight:700;padding:2.5px 9px;border-radius:999px;white-space:nowrap}
+.v-ok{background:var(--good-soft);color:var(--good)}.v-fix{background:var(--warn-soft);color:var(--warn)}.v-no{background:var(--bad-soft);color:var(--bad)}.v-v8{background:var(--info-soft);color:var(--info)}
+footer{color:var(--muted);font-size:.75rem;text-align:center;padding:6px 8px 0;line-height:1.4}
+
+/* ---------- coleta: hero de gravação (estilo iOS Voice Memos / Instrumento) ---------- */
+.hero{display:grid;justify-items:center;gap:14px;padding:22px 18px 24px;background:
+  radial-gradient(380px 200px at 50% 0%,var(--accent-soft),transparent 72%),var(--panel)}
+.hero.recording{background:radial-gradient(380px 200px at 50% 0%,var(--bad-soft),transparent 72%),var(--panel);border-color:color-mix(in srgb,var(--rec) 35%,var(--line2))}
+.hero-top{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.timer{font:300 clamp(3rem,14vw,4.4rem)/1 var(--mono);letter-spacing:-.04em;color:var(--fg);font-variant-numeric:tabular-nums}
+.hero.recording .timer{color:var(--rec);font-weight:400}
+.hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;max-width:400px;border:.5px solid var(--line2);border-radius:var(--r-m);overflow:hidden;background:var(--panel2)}
+.hero-stats>div{display:grid;justify-items:center;padding:9px 6px;gap:2px}
+.hero-stats>div+div{border-left:.5px solid var(--line2)}
+.hero-stats b{font:650 1.1rem/1.1 var(--mono)}
+.hero-stats span{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.recbtn{display:grid;justify-items:center;gap:8px;border:0;background:none;color:var(--fg);font:600 .9rem var(--sans);cursor:pointer;padding:4px;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.recbtn .ring{width:82px;height:82px;border-radius:50%;border:3.5px solid var(--fg2);display:grid;place-items:center;transition:border-color .22s,transform .15s}
+.recbtn .core{width:62px;height:62px;border-radius:50%;background:var(--rec);transition:all .24s var(--ease);box-shadow:0 6px 18px -5px var(--rec)}
+.recbtn[aria-pressed="true"] .core{width:32px;height:32px;border-radius:8px}
+.recbtn[aria-pressed="true"] .ring{border-color:var(--rec);animation:pulse 1.8s var(--ease) infinite}
+.recbtn:active .core{transform:scale(.91)}
+.recbtn:disabled{opacity:.45;cursor:wait}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 42%,transparent)}100%{box-shadow:0 0 0 16px transparent}}
+.reclist{display:grid;gap:8px}
+.recitem{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:12px 14px;border:.5px solid var(--line2);border-radius:var(--r-m);background:var(--panel2)}
+.recitem .ttl{font-weight:650;font-size:.9rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.recitem .meta{grid-column:1/2;font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.recitem .acts{grid-column:2/3;grid-row:1/3;display:flex;gap:6px}
+dialog{border:0;padding:0;background:transparent;color:var(--fg);max-width:min(440px,calc(100vw - 24px));width:100%}
+dialog::backdrop{background:rgba(5,10,18,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:var(--r-l);padding:18px;box-shadow:var(--shadow-2)}
+.stack{display:grid;gap:8px;margin-top:14px}
+.stack .btn{min-height:var(--tap);width:100%}
+
+/* ---------- iPhone & telas compactas ---------- */
+@media (max-width:760px){
+  body{font-size:15px}
+  .appbar{padding:calc(env(safe-area-inset-top) + 6px) 12px 6px;gap:8px}
+  .sub{display:none}
+  .seg.theme button{padding:4px 8px;font-size:.73rem;min-height:28px}
+  nav.tabs{position:fixed;top:auto;bottom:0;left:0;right:0;justify-content:space-around;gap:2px;
+    padding:5px max(6px,env(safe-area-inset-left)) calc(5px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-right));
+    border-bottom:0;border-top:.5px solid var(--line2);box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+  nav.tabs button{flex:1;flex-direction:column;gap:2px;padding:4px 2px;min-height:48px;font-size:.65rem;border-radius:10px;position:relative;letter-spacing:-.01em}
+  nav.tabs button[aria-selected="true"]{background:transparent;font-weight:700}
+  nav.tabs button[aria-selected="true"]::before{content:"";position:absolute;top:-5px;left:50%;width:24px;height:2.5px;margin-left:-12px;border-radius:0 0 3px 3px;background:currentColor}
+  nav.tabs svg{width:22px;height:22px}
+  .wrap{padding:12px 12px calc(var(--bar-h) + 22px + env(safe-area-inset-bottom));gap:12px}
+  .card{padding:14px;border-radius:18px}
+  .metric{padding:10px 11px}.metric .v{font-size:1.08rem}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  canvas.chart{height:128px}
+  canvas.chart.scene{height:260px}
+  .btn{min-height:42px}
+  .btn.sm{min-height:36px}
+  .actionsrow .btn,.toolbar>.btn{flex:1 1 auto}
+  .action .btn{width:100%}
+  .recitem{grid-template-columns:1fr}
+  .recitem .acts{grid-column:1;grid-row:auto;margin-top:6px}
+  .recitem .acts .btn{flex:1}
+  dialog{margin:auto auto 0;max-width:100vw}
+  .sheet{border-radius:22px 22px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  #dc-table thead,#ts-table thead{display:none}
+  #dc-table tbody,#ts-table tbody{display:grid;gap:8px;margin-top:6px}
+  #dc-table tr,#ts-table tr{display:grid;gap:4px;border:.5px solid var(--line2);border-radius:var(--r-m);padding:11px 12px;background:var(--panel2)}
+  #dc-table td,#ts-table td{display:block;border:0;padding:0}
+  #ts-table td:nth-child(1){font-weight:700;color:var(--accent);font-size:.76rem}
+  #ts-table td:nth-child(2){font-weight:650;font-size:.86rem;margin-bottom:2px}
+  #ts-table td:nth-child(3)::before{content:"Ref: ";color:var(--muted);font-family:var(--sans)}
+  #ts-table td:nth-child(4)::before{content:"Obtido: ";color:var(--muted);font-family:var(--sans)}
+  #ts-table td:nth-child(6)::before{content:"Tempo: ";color:var(--muted);font-family:var(--sans)}
+  #ts-table td:nth-child(6)::after{content:" ms"}
+  #dc-table td:nth-child(2)::before{content:"Pedido: ";color:var(--muted);font-weight:600}
+  #dc-table td:nth-child(4)::before{content:"No v9: ";color:var(--muted);font-weight:600}
+}
+@media (max-width:375px){.seg.theme button{padding:3px 6px;font-size:.69rem;min-height:26px}.chips button{padding:7px 11px}.logo{flex-basis:28px;height:28px}}
+@media (pointer:coarse){.seg.big button,.chips button{min-height:42px}.recitem .acts{gap:8px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+</style>
+</head>
+<body>
+<header class="appbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M2 14h3l2-4 3 8 2-5h10"/></svg></span>
+    <div class="brandtxt"><h1>IMU Auth</h1><div class="sub">coleta inercial · painel do preprint v9</div></div>
+  </div>
+  <button class="recchip" id="rec-chip" hidden aria-label="Gravação em andamento: abrir Coletar"><span class="dot"></span><span id="rec-chip-t">00:00</span></button>
+  <div class="seg theme" id="theme" aria-label="Tema">
+    <button data-mode="auto" aria-pressed="true" title="Automático">Auto</button><button data-mode="light" aria-pressed="false" title="Claro">Claro</button><button data-mode="dark" aria-pressed="false" title="Escuro">Escuro</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Seções">
+  <button role="tab" aria-selected="true" data-tab="collect"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5" class="fill"/></svg><span>Coletar</span></button>
+  <button role="tab" aria-selected="false" data-tab="sensor"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.5 18.5h3"/></svg><span>Sensores</span></button>
+  <button role="tab" aria-selected="false" data-tab="live"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 3 4-7 5 6"/><path d="M3 21h18"/></svg><span>Simulador</span></button>
+  <button role="tab" aria-selected="false" data-tab="tests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 006.2 21h11.6a2 2 0 001.7-2.5L14 9V3"/><path d="M7.5 15h9"/></svg><span>Testes</span></button>
+  <button role="tab" aria-selected="false" data-tab="docs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h10l4 4v13H5z"/><path d="M14.5 3.5V8H19M8.5 12.5h7M8.5 16h7"/></svg><span>Sobre</span></button>
+</nav>
+
+<main class="wrap">
+
+<!-- ============================ COLETAR ============================ -->
+<section id="tab-collect" class="tabpanel" role="tabpanel">
+  <div class="card hero" id="cl-hero">
+    <div class="hero-top">
+      <span class="badge neutral" id="cl-state">pronto para gravar</span>
+      <span class="badge neutral" id="cl-wake" title="Wake Lock mantém a tela acesa; com a tela bloqueada o iOS para de entregar amostras">tela: —</span>
+    </div>
+    <div class="timer" id="cl-timer" aria-live="off">00:00</div>
+    <div class="hero-stats">
+      <div><b id="cl-fs">—</b><span>Hz medido</span></div>
+      <div><b id="cl-n">0</b><span>amostras</span></div>
+      <div><b id="cl-gaps">0</b><span>lacunas</span></div>
+    </div>
+    <button class="recbtn" id="cl-rec" aria-pressed="false"><span class="ring"><span class="core"></span></span><span class="lbl" id="cl-rec-lbl">Gravar</span></button>
+    <div id="cl-msg" class="note warn" hidden></div>
+  </div>
+
+  <div class="card" id="cl-during">
+    <h2>Durante a coleta</h2>
+    <div class="field">
+      <span class="flabel">Quem segura o aparelho</span>
+      <div class="seg big" id="cl-holder" role="group" aria-label="Quem segura o aparelho">
+        <button data-v="owner" aria-pressed="true">Titular</button><button data-v="other" aria-pressed="false">Outra pessoa</button><button data-v="table" aria-pressed="false">Apoiado</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="flabel">Postura / atividade</span>
+      <div class="chips" id="cl-posture" role="group" aria-label="Postura ou atividade">
+        <button data-v="sentado" aria-pressed="true">Sentado</button><button data-v="em_pe" aria-pressed="false">Em pé</button><button data-v="andando" aria-pressed="false">Andando</button><button data-v="deitado" aria-pressed="false">Deitado</button><button data-v="digitando" aria-pressed="false">Digitando</button><button data-v="veiculo" aria-pressed="false">Veículo</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="flabel">Marcador</span>
+      <div class="inline">
+        <input type="text" id="cl-mtext" placeholder="nota opcional (ex.: entregou o aparelho)" maxlength="120" autocomplete="off">
+        <button class="btn" id="cl-mark" disabled>Marcar</button>
+      </div>
+    </div>
+    <div class="legend"><span><i style="background:var(--info)"></i>|a_lin| m/s²</span><span><i style="background:var(--warn)"></i>|ω| rad/s</span><span class="mono" id="cl-sig-note"></span></div>
+    <canvas class="chart" id="cl-c0" style="height:110px"></canvas>
+    <ul class="log compact" id="cl-events" aria-label="Eventos da gravação"></ul>
+  </div>
+
+  <details class="card fold" id="cl-meta" open>
+    <summary><h2>Identificação da sessão</h2><span class="small muted" id="cl-meta-sum"></span></summary>
+    <div class="form">
+      <label class="fl"><span>Código do participante</span><input type="text" id="cl-pid" placeholder="P01" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <label class="fl"><span>Mão dominante na coleta</span><select id="cl-hand"><option value="direita">direita</option><option value="esquerda">esquerda</option><option value="duas">duas mãos</option></select></label>
+      <label class="fl"><span>Capa / acessório</span><select id="cl-case"><option value="sem capa">sem capa</option><option value="capa fina">capa fina</option><option value="capa grossa">capa grossa</option><option value="pop-socket">anel / pop-socket</option></select></label>
+      <label class="fl wide"><span>Notas</span><textarea id="cl-notes" rows="2" maxlength="500" placeholder="contexto, local, tarefa…"></textarea></label>
+    </div>
+    <p class="small muted">Fica salvo neste aparelho e entra nos metadados de cada gravação. Use só códigos, nunca nomes.</p>
+  </details>
+
+  <div class="card">
+    <h2>Gravações neste aparelho <span class="badge neutral" id="cl-store">—</span></h2>
+    <div class="reclist" id="cl-list"><p class="small muted">Nenhuma gravação ainda.</p></div>
+    <p class="small muted" style="margin-top:8px">Cada gravação guarda os valores do DeviceMotion como o navegador entrega (sem filtro e sem inverter sinal), com rótulos e marcadores como eventos. Rótulos nunca entram no LLR nem no portão de captura (C6); na análise ao vivo só descartam as 2 janelas da troca, que misturam dois portadores. Nada sai do aparelho até você exportar.</p>
+  </div>
+
+  <details class="card fold">
+    <summary><h2>Como coletar no iPhone</h2></summary>
+    <ol class="howto">
+      <li>Abra este arquivo por <b>HTTPS</b> no Safari (GitHub Pages, Netlify Drop ou similar). O iOS não entrega sensores de movimento em <span class="mono">http://</span> nem em visualizadores de arquivo.</li>
+      <li>Toque em <b>Gravar</b> e permita “Movimento e Orientação”. Se negou antes: Ajustes › Apps › Safari › Avançado › Dados do Site, apague o site e tente de novo.</li>
+      <li>Mantenha esta página aberta e em primeiro plano. A tela fica acesa enquanto grava; bloquear a tela ou trocar de app pausa as amostras e vira <b>lacuna</b> no arquivo.</li>
+      <li>Troque o rótulo <b>no instante</b> em que o aparelho muda de mãos. Use <b>Marcar</b> para eventos pontuais.</li>
+      <li>Ao final, <b>Parar</b> e depois <b>Exportar</b>: o menu de compartilhar envia CSV + JSON por AirDrop, Arquivos ou e-mail.</li>
+      <li>Prefira o Safari. Na Tela de Início (Compartilhar › Adicionar) a página abre em tela cheia, mas guarda gravações separadas das do Safari e, antes do iOS 18.4, não consegue manter a tela acesa: ponha Ajustes › Tela e Brilho › Bloqueio Automático em Nunca.</li>
+    </ol>
+  </details>
+
+  <dialog id="cl-dialog" aria-labelledby="cl-dtitle">
+    <form method="dialog" class="sheet">
+      <h2 id="cl-dtitle">Exportar</h2>
+      <p class="small muted" id="cl-dinfo">preparando…</p>
+      <div class="stack">
+        <button class="btn primary" type="button" id="cl-share" disabled>Compartilhar (AirDrop, Arquivos, e-mail)</button>
+        <button class="btn" type="button" id="cl-dl-csv" disabled>Baixar amostras (.csv)</button>
+        <button class="btn" type="button" id="cl-dl-ev" disabled>Baixar eventos (.csv)</button>
+        <button class="btn" type="button" id="cl-dl-json" disabled>Baixar tudo (.json)</button>
+        <button class="btn ghost" value="close">Fechar</button>
+      </div>
+    </form>
+  </dialog>
+</section>
+
+<!-- ============================ SENSORES ============================ -->
+<section id="tab-sensor" class="tabpanel" role="tabpanel" hidden>
+  <div class="card">
+    <h2>Autenticação com os sensores deste celular <span class="badge neutral" id="sn-support">verificando…</span></h2>
+    <div class="note warn">A garantia de Ville (§9.3) só vale com LLR calibrado contra uma <b>população medida</b>. Aqui o impostor é um prior declarado ou uma segunda pessoa cadastrada: serve para teste de campo, não como garantia.</div>
+    <div class="toolbar" style="margin-top:10px">
+      <button class="btn primary" id="sn-start">Ativar sensores</button>
+      <button class="btn" id="sn-stop" disabled>Parar</button>
+      <span class="mono muted small" id="sn-rate">f_s medida: —</span>
+      <span class="mono muted small" id="sn-count"></span>
+    </div>
+    <div id="sn-error" class="note bad" style="margin-top:10px" hidden></div>
+    <div class="steps" style="margin-top:12px">
+      <div class="step" id="sn-step1"><div class="b"><b>Cadastro silencioso do titular</b> · 30 janelas válidas de 4 s (≈ 1 min) usando o celular normalmente.<div class="bar" style="margin:8px 0"><i id="sn-prog1"></i></div><div class="row"><button class="btn sm primary" id="sn-enroll" disabled>Iniciar cadastro</button><button class="btn sm" id="sn-load">Carregar template</button><span class="small muted" id="sn-enroll-txt"></span></div></div></div>
+      <div class="step" id="sn-step2"><div class="b"><b>Opcional: coorte medida</b> · entregue o aparelho a outra pessoa por 1 min (sem isso, usa-se o prior declarado).<div class="bar" style="margin:8px 0"><i id="sn-prog2"></i></div><div class="row"><button class="btn sm" id="sn-enroll2" disabled>Cadastrar segunda pessoa</button><span class="small muted" id="sn-enroll2-txt"></span></div></div></div>
+      <div class="step" id="sn-step3"><div class="b"><b>Monitorar</b> · cada 2 s uma janela vira evidência; teste a troca entregando o aparelho.<div class="row" style="margin-top:8px"><span class="badge neutral" id="sn-mode">aguardando</span><button class="btn sm" id="sn-label-owner" aria-pressed="true">Rótulo: dono</button><button class="btn sm" id="sn-label-other" aria-pressed="false">Rótulo: outra pessoa</button></div></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="status">
+      <span class="badge ok" id="sn-badge">sem template</span>
+      <span class="muted mono" id="sn-clock"></span>
+      <span class="spacer"></span>
+      <button class="btn good sm" id="sn-strong">Fator forte · nova sessão</button>
+    </div>
+    <div id="sn-stepup" class="note warn" style="margin-top:10px" hidden></div>
+    <div class="grid g4 metrics" style="margin-top:12px" id="sn-metrics"></div>
+    <h3>Decisão por ação</h3>
+    <div class="grid g3" id="sn-actions"></div>
+  </div>
+
+  <div class="card">
+    <h2>Evidência · últimas 60 janelas</h2>
+    <div class="legend"><span><i style="background:var(--good)"></i>ℓ_k &gt; 0 (dono, ±6)</span><span><i style="background:var(--bad)"></i>ℓ_k &lt; 0</span><span><i style="background:var(--info)"></i>Λ e ln B_r</span><span><i style="background:var(--muted)"></i>abstida</span></div>
+    <canvas class="chart" id="sn-c1"></canvas>
+    <div class="legend"><span><i style="background:var(--warn)"></i>C (CUSUM) e limiar h</span></div>
+    <canvas class="chart" id="sn-c2"></canvas>
+    <div class="legend"><span><i style="background:var(--violet)"></i>log₁₀ φ (Shiryaev)</span><span>limiares: R$ 50 · 5 mil · 50 mil</span></div>
+    <canvas class="chart" id="sn-c3"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Aparelho em 3D <small class="muted">Madgwick, eq. 19; ψ deriva sem magnetômetro</small></h2>
+    <canvas class="chart scene" id="sn-3d"></canvas>
+    <div class="toolbar">
+      <div class="seg" id="sn-3d-view" aria-label="Vista"><button data-v="tq" aria-pressed="true">3/4</button><button data-v="user" aria-pressed="false">Usuário</button><button data-v="side" aria-pressed="false">Lateral</button><button data-v="top" aria-pressed="false">Topo</button></div>
+      <span class="small muted">arraste para orbitar</span>
+    </div>
+    <details class="sub-fold"><summary>Camadas</summary>
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" data-l="body" checked> eixos do corpo</label>
+        <label class="toggle"><input type="checkbox" data-l="world" checked> mundo (ENU)</label>
+        <label class="toggle"><input type="checkbox" data-l="g" checked> g</label>
+        <label class="toggle"><input type="checkbox" data-l="ghat" checked> ĝ</label>
+        <label class="toggle"><input type="checkbox" data-l="omega" checked> ω</label>
+        <label class="toggle"><input type="checkbox" data-l="alin" checked> a_lin</label>
+      </div>
+    </details>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <h2>Sinais e gating <small class="muted">§7: só estatísticas de captura</small></h2>
+      <div class="legend"><span><i style="background:var(--info)"></i>|a_lin| (m/s²)</span><span><i style="background:var(--warn)"></i>|ω| (rad/s)</span></div>
+      <canvas class="chart" id="sn-c0"></canvas>
+      <div class="row" id="sn-gate" style="margin-top:8px"></div>
+      <details class="sub-fold"><summary>Features da última janela</summary><dl class="kv" id="sn-feat"></dl></details>
+    </div>
+    <div class="card">
+      <h2>Modelo de evidência</h2>
+      <dl class="kv" id="sn-model"></dl>
+      <label class="toggle" style="margin-top:10px"><input type="checkbox" id="sn-tremor"> incluir tremor bruto (não normalizado; §10.4 mostra que é pior que inútil)</label>
+      <div class="legend" style="margin-top:8px">separabilidade d′ por feature</div>
+      <canvas class="chart" id="sn-cd" style="height:120px"></canvas>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <h2>H9 · coerência toque–inércia</h2>
+      <p class="small muted">Um toque real move o aparelho: transiente de |a_lin| nos 150 ms seguintes acima de 4σ da linha de base. Toques injetados por software não produzem resposta inercial (§18).</p>
+      <div class="tapzone" id="sn-tap">toque aqui com o aparelho na mão</div>
+      <div class="row" style="margin-top:8px"><span class="badge ok" id="sn-h9-coh">coerentes: 0</span><span class="badge bad" id="sn-h9-inc">incoerentes: 0</span><span class="small muted" id="sn-h9-last"></span></div>
+    </div>
+    <div class="card">
+      <h2>Sonda háptica · o que 60 Hz enxerga</h2>
+      <p class="small muted">O LRA vibra a 130–230 Hz; com f_s ≈ 60 Hz e anti-aliasing no MEMS só sobra o <b>envelope</b> do pulso (C10, §5.1). Medir f_n e ζ da mão exige f_s ≥ 400 Hz, força calibrada e referência free-free (Prop. 8). O iOS não expõe vibração à web.</p>
+      <div class="row"><button class="btn" id="sn-haptic">Pulso de 46 ms</button><span class="small muted" id="sn-haptic-txt"></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="actionsrow">
+      <button class="btn" id="sn-csv">Exportar janelas (CSV)</button>
+      <button class="btn" id="sn-save">Salvar template</button>
+      <button class="btn danger" id="sn-clear">Limpar análise</button>
+    </div>
+    <p class="small muted" style="margin-top:8px">Janelas de features e template ficam só neste aparelho. Gravações brutas ficam na aba Coletar e não são apagadas aqui.</p>
+  </div>
+</section>
+
+<!-- ============================ AO VIVO (SIMULADOR) ============================ -->
+<section id="tab-live" class="tabpanel" role="tabpanel" hidden>
+  <div class="card">
+    <div class="status">
+      <span class="badge ok" id="lv-badge">Sessão íntegra</span>
+      <span class="badge neutral" id="lv-holder" title="Verdade da simulação: o sistema não vê quem segura o aparelho">portador real: dono</span>
+      <span class="muted mono" id="lv-clock">t = 0 s · passo 0</span>
+    </div>
+    <div class="toolbar">
+      <div class="seg" id="lv-speed" aria-label="Velocidade"><button data-v="1" aria-pressed="true">1×</button><button data-v="10" aria-pressed="false">10×</button><button data-v="60" aria-pressed="false">60×</button></div>
+      <button class="btn sm" id="lv-pause">Pausar</button>
+      <button class="btn sm" id="lv-reset">Reiniciar</button>
+    </div>
+    <div id="lv-stepup" class="note warn" style="margin-top:10px" hidden></div>
+    <div class="grid g4 metrics" style="margin-top:12px" id="lv-metrics"></div>
+  </div>
+
+  <div class="card">
+    <h2>Eventos da sessão</h2>
+    <div class="actionsrow">
+      <button class="btn danger" id="lv-handoff">Entregar a outra pessoa</button>
+      <button class="btn" id="lv-back">Dono retoma</button>
+      <button class="btn good" id="lv-strong">Fator forte · nova sessão</button>
+    </div>
+    <ul class="log" id="lv-log"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Decisão por ação <small class="muted">§16: portão por valor com posterior de Shiryaev</small></h2>
+    <div class="grid g3" id="lv-actions"></div>
+    <p class="small muted" style="margin-top:8px">Com o impostor, executar é <b>perda</b>; com o dono, step-up é <b>fricção</b>. A linha “janela fixa” compara com o portão B de 15 janelas.</p>
+    <div class="row" id="lv-outcomes"></div>
+  </div>
+
+  <div class="card">
+    <h2>Evidência · últimos 2 minutos</h2>
+    <div class="legend"><span><i style="background:var(--good)"></i>ℓ_k &gt; 0 (dono)</span><span><i style="background:var(--bad)"></i>ℓ_k &lt; 0</span><span><i style="background:var(--info)"></i>Λ e ln B_r</span><span><i style="background:var(--muted)"></i>abstida</span></div>
+    <canvas class="chart" id="lv-c1"></canvas>
+    <div class="legend"><span><i style="background:var(--warn)"></i>C (CUSUM) e limiar h</span></div>
+    <canvas class="chart" id="lv-c2"></canvas>
+    <div class="legend"><span><i style="background:var(--violet)"></i>log₁₀ φ (Shiryaev)</span><span>limiares: R$ 50 · 5 mil · 50 mil</span></div>
+    <canvas class="chart" id="lv-c3"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Aparelho em 3D <small class="muted">cinemática ilustrativa do portador</small></h2>
+    <canvas class="chart scene" id="lv-3d"></canvas>
+    <div class="toolbar">
+      <div class="seg" id="lv-3d-view" aria-label="Vista"><button data-v="tq" aria-pressed="true">3/4</button><button data-v="user" aria-pressed="false">Usuário</button><button data-v="side" aria-pressed="false">Lateral</button><button data-v="top" aria-pressed="false">Topo</button></div>
+      <span class="small muted">arraste para orbitar</span>
+    </div>
+    <details class="sub-fold"><summary>Camadas</summary>
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" data-l="body" checked> eixos do corpo</label>
+        <label class="toggle"><input type="checkbox" data-l="world" checked> mundo (ENU)</label>
+        <label class="toggle"><input type="checkbox" data-l="g" checked> g</label>
+        <label class="toggle"><input type="checkbox" data-l="ghat" checked> ĝ</label>
+        <label class="toggle"><input type="checkbox" data-l="omega" checked> ω</label>
+        <label class="toggle"><input type="checkbox" data-l="alin" checked> a_lin</label>
+      </div>
+    </details>
+  </div>
+
+  <details class="card fold">
+    <summary><h2>Controles da simulação</h2><span class="small muted">d′, h, ν, imitação, abstenção…</span></summary>
+    <div class="grid g3" id="lv-controls"></div>
+    <p class="small muted">Modelo gaussiano do Apêndice C: ℓ | dono ~ N(μ(1−κ), 2μ), ℓ | impostor ~ N(−μ(1−m), 2μ), μ = d′²/2, passo Δ = 2 s. Resultados de modelo, não de campo.</p>
+  </details>
+</section>
+
+<!-- ============================ TESTES ============================ -->
+<section id="tab-tests" class="tabpanel" role="tabpanel" hidden>
+  <div class="card">
+    <h2>Testes Monte Carlo com semente fixa <small class="muted">reproduzem tabelas do preprint v9</small></h2>
+    <div class="toolbar">
+      <button class="btn primary" id="ts-run">Rodar os 12 testes</button>
+      <label class="small inline-l">semente <input type="number" inputmode="numeric" id="ts-seed" value="20261025"></label>
+      <span class="mono muted small" id="ts-summary"></span>
+    </div>
+    <p class="small muted">Cada teste compara o valor obtido com a tabela citada, dentro do erro de Monte Carlo (≈ √(p(1−p)/N)) e do arredondamento. Roda em segundo plano no seu navegador; usa menos trajetórias que o artigo, por isso as tolerâncias são declaradas por teste.</p>
+    <div class="tablewrap"><table id="ts-table"><thead><tr><th>#</th><th>Teste</th><th>Referência (preprint)</th><th>Obtido</th><th>Status</th><th>ms</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- ============================ SOBRE ============================ -->
+<section id="tab-docs" class="tabpanel" role="tabpanel" hidden>
+  <div class="card">
+    <h2>Como ler este painel</h2>
+    <div id="dc-how"></div>
+  </div>
+  <details class="card fold">
+    <summary><h2>Correções da auditoria × preprint v9</h2><span class="small muted">Apêndice D, conferido por cálculo</span></summary>
+    <p class="small muted">O documento auditou uma “v8” de 66 páginas. Cada item foi recalculado; os testes T4, T6, T9, T10 e T11 reproduzem os números.</p>
+    <div class="tablewrap"><table id="dc-table"><thead><tr><th>Item</th><th>O que o documento pedia</th><th>Veredito</th><th>Por quê / o que ficou no v9</th></tr></thead><tbody></tbody></table></div>
+  </details>
+  <details class="card fold">
+    <summary><h2>O que mudou em relação ao painel antigo</h2></summary>
+    <div id="dc-old"></div>
+  </details>
+</section>
+
+<footer>Painel de modelo: números do simulador e dos testes são simulações sob o modelo declarado no preprint v9; validação empírica segue a §23. Arquivo único, sem dependências, funciona offline.</footer>
+</main>
+<script id="engine-js">
+/* ============================================================
+   Motor sequencial — preprint v9 (§7, §9.3, §12, §16, §17, §22, Ap. E)
+   Módulo puro: sem DOM. Funções de estado devolvem objetos novos.
+   ============================================================ */
+'use strict';
+const AuthEngine = (() => {
+  const DELTA = 2;            // s de dados novos por passo (§5.3)
+  const ALPHA_SESS = 1e-6;    // orçamento de falsa aceitação por sessão (nível Face ID)
+  const BETA = 0.01;          // falsa rejeição do SPRT (β = 1 %)
+  const LN_FACEID = Math.log(1e6);
+
+  const defaults = () => ({
+    dp: 1.5, h: 8, nu: 0,
+    // score de interface (eq. 65 / §22): não substitui CUSUM nem portão por valor
+    lambda: Math.LN2 / 60, eta: 0.10, Smin: 0.5, deltaPlus: 0.5,
+    // portão por valor (§16): posterior de Shiryaev
+    varpi: 1e-5, cu: 1, FARu: 1e-3, Lmax: 50000, piI: 1e-3, M: 15,
+    // robustez (§17): imitação m, titular "cabra" κ, dependência AR(1) ρ
+    m: 0, kappa: 0, rho: 0, treatment: 'naive',   // 'naive' | 'deflate' | 'whiten'
+    // abstenção markoviana (Prop. 10): p01 = P(q=1|q=0), p10 = P(q=0|q=1)
+    p01: 1, p10: 0,
+    // erro deliberado (C6 / T4): abster por escore — quebra o martingale
+    gateOnScore: false, gateCut: -0.5,
+  });
+
+  /* ---------- PRNG determinístico (mulberry32 + Box–Muller polar) ---------- */
+  function makeRng(seed) {
+    let a = (seed >>> 0) || 0x9E3779B9;
+    const u = () => {
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    let spare = null;
+    const n = () => {
+      if (spare !== null) { const s = spare; spare = null; return s; }
+      let u1, u2, s;
+      do { u1 = 2 * u() - 1; u2 = 2 * u() - 1; s = u1 * u1 + u2 * u2; } while (s >= 1 || s === 0);
+      const f = Math.sqrt(-2 * Math.log(s) / s);
+      spare = u2 * f;
+      return u1 * f;
+    };
+    return { u, n };
+  }
+
+  /* ---------- Fonte de evidência (modelo gaussiano declarado, Ap. C) ----------
+     y_k = s·μ' + √(2μ)·ε_k ; ε AR(1) com coeficiente ρ (Tabela 13, Prop. 9)
+     dono: μ' = μ(1−κ) ; impostor: μ' = −μ(1−m)
+     tratamento: ingênuo ℓ=y ; deflação ℓ=y/V ; branqueamento ℓ̃=(y−ρy₋)/(1+ρ)   */
+  function makeSource(pOrGet, rng) {
+    const P = typeof pOrGet === 'function' ? pOrGet : () => pOrGet;
+    let eps = rng.n(), yPrev = null;
+    const self = {
+      get mu() { const p = P(); return p.dp * p.dp / 2; },
+      get V() { const p = P(); return (1 + p.rho) / (1 - p.rho); },
+      next(holder) {
+        const p = P(), mu = p.dp * p.dp / 2, sd = Math.sqrt(2 * mu), rho = p.rho, V = (1 + rho) / (1 - rho);
+        const sgn = holder === 'owner' ? 1 : -1;
+        const mean = holder === 'owner' ? mu * (1 - p.kappa) : -mu * (1 - p.m);
+        if (p.treatment === 'whiten-iid') {          // reprodução literal da Tabela E.1 (incrementos i.i.d. da Prop. 9, deriva μ(1−m)/V)
+          const l = mean / V + Math.sqrt(2 * mu / V) * rng.n();
+          return { y: l, l };
+        }
+        eps = rho * eps + Math.sqrt(1 - rho * rho) * rng.n();
+        const y = mean + sd * eps;
+        let l;
+        if (p.treatment === 'deflate') l = y / V;
+        else if (p.treatment === 'whiten') l = yPrev === null ? y : (y - rho * yPrev) / (1 + rho);
+        else l = y;
+        yPrev = y;
+        return { y, l };
+      },
+    };
+    return self;
+  }
+
+  /* ---------- Gating ancilar markoviano (Prop. 10) ---------- */
+  function makeGate(pOrGet, rng) {
+    const P = typeof pOrGet === 'function' ? pOrGet : () => pOrGet;
+    const p0 = P();
+    const qbar0 = p0.p10 === 0 ? 1 : p0.p01 / (p0.p01 + p0.p10);
+    let q = rng.u() < qbar0 ? 1 : 0;
+    return {
+      get qbar() { const p = P(); return p.p10 === 0 ? 1 : p.p01 / (p.p01 + p.p10); },
+      next() { const p = P(); q = q === 1 ? (rng.u() < p.p10 ? 0 : 1) : (rng.u() < p.p01 ? 1 : 0); return q; },
+    };
+  }
+
+  /* ---------- Orçamento de α por renovação (§9.3): α_r = 6α/(π²r²) ---------- */
+  const alphaR = r => 6 * ALPHA_SESS / (Math.PI * Math.PI * r * r);
+  const lnB = r => Math.log((1 - BETA) / alphaR(r));
+  const lnA = r => Math.log(BETA / (1 - alphaR(r)));
+
+  /* ---------- Portão por valor (§16) ---------- */
+  const phiThreshold = (p, L) => p.cu / (L * (1 - p.FARu));                    // eq. 78 com φ
+  const lambdaStar = (p, L) => Math.log(L * (1 - p.FARu) / p.cu) + Math.log(p.piI / (1 - p.piI)); // eq. 79
+
+  /* ---------- Sessão (imutável) ---------- */
+  function newSession() {
+    return {
+      k: 0, t: 0, Lambda: 0, C: 0, phi: 0, S: 1, r: 1, alphaSpent: 0,
+      q: 1, l: 0, y: 0, holder: 'owner', handoffAt: null, revoked: false, revokedBy: null,
+      stepUpPending: null, recent: [], events: [],
+      counters: { windows: 0, abstained: 0, renewals: 0, alarms: 0, stepUps: 0, scoreStepUps: 0, sprtStepUps: 0 },
+    };
+  }
+
+  /* Um passo do algoritmo operacional (§22, com C9: S decai em toda janela).
+     Desvio declarado de §22(h): Λ ≤ ln A pede step-up (motivo 'sprt') em vez de revogar direto —
+     com ~90 renovações/h e β = 1 % por renovação, revogar custaria ≈0,33 revogações/h ao dono (3× a FAPH do CUSUM);
+     a Prop. 7 só exige que a camada acrescente exigências, e o step-up reprovado revoga de qualquer modo. */
+  function stepSession(s, p, inc, q) {
+    if (s.revoked) return { ...s, events: [] };                               // sessão revogada não processa evidência
+    const n = { ...s, counters: { ...s.counters }, k: s.k + 1, t: s.t + DELTA, q, l: inc.l, y: inc.y, events: [] };
+    if (q !== 0 && !Number.isFinite(inc.l)) { q = 0; n.q = 0; n.l = 0; n.events.push('invalid'); } // falha fechada: ℓ inválido ⇒ abstenção
+    n.counters.windows += 1;
+    n.S = s.S * Math.exp(-p.lambda * DELTA);                                   // (a)
+    if (q === 0) {
+      n.counters.abstained += 1;
+      n.phi = (s.phi + p.varpi) / (1 - p.varpi);                               // (d) e^{−ℓ}=1
+      n.recent = s.recent.length >= p.M ? [...s.recent.slice(1), 0] : [...s.recent, 0];  // janela fixa em janelas de relógio (ℓ=0 na abstenção)
+    } else {
+      const l = inc.l;
+      n.Lambda = s.Lambda + l;                                                 // (f)
+      n.C = Math.max(0, s.C - l - p.nu);
+      n.phi = (s.phi + p.varpi) * Math.exp(-l) / (1 - p.varpi);
+      n.S = Math.min(1, n.S + p.eta * Math.max(0, l));                        // variante contínua (§22); única regra de reforço
+      n.recent = s.recent.length >= p.M ? [...s.recent.slice(1), l] : [...s.recent, l];
+      if (n.Lambda >= lnB(s.r)) {                                              // (g) renovação
+        n.alphaSpent = s.alphaSpent + alphaR(s.r);
+        n.r = s.r + 1; n.Lambda = 0;
+        n.counters.renewals += 1; n.events.push('renew');
+      } else if (n.Lambda <= lnA(s.r) && !n.stepUpPending) {                   // (h) limiar inferior do SPRT ⇒ step-up (uma vez)
+        n.stepUpPending = 'sprt'; n.counters.sprtStepUps = (s.counters.sprtStepUps || 0) + 1; n.events.push('sprt');
+      }
+    }
+    if (!n.revoked) {                                                          // (i) alarme do CUSUM nunca é mascarado
+      if (n.C > p.h && n.stepUpPending !== 'cusum') { n.stepUpPending = 'cusum'; n.counters.alarms += 1; n.events.push('alarm'); }
+      else if (!n.stepUpPending && n.S < p.Smin) { n.stepUpPending = 'score'; n.counters.scoreStepUps += 1; n.events.push('score'); }
+    }
+    return n;
+  }
+
+  /* Resolução do step-up: aprovado ⇒ C←0, φ←0 (§22 i) e, se o motivo foi o SPRT (ou Λ cruzou ln A antes de ser sobrescrito pelo CUSUM), Λ←0; reprovado ⇒ revoga. */
+  function resolveStepUp(s, approved) {
+    const n = { ...s, counters: { ...s.counters }, events: [] };
+    n.counters.stepUps += 1;
+    const why = s.stepUpPending; n.stepUpPending = null;
+    if (approved) { n.C = 0; n.phi = 0; if (why === 'sprt' || s.Lambda <= lnA(s.r)) n.Lambda = 0; n.events.push('stepup-ok'); }
+    else { n.revoked = true; n.revokedBy = 'stepup'; n.events.push('stepup-fail'); }
+    return n;
+  }
+  function revoke(s, by) { return { ...s, revoked: true, revokedBy: by, stepUpPending: null, events: ['revoke'] }; }
+
+  /* Fator forte aprovado = nova sessão (orçamento de α e contador r reiniciam). */
+  function strongFactor(s) {
+    const n = newSession();
+    n.t = s.t; n.k = s.k; n.holder = s.holder; n.events = ['strong'];
+    return n;
+  }
+
+  function handoff(s) { return { ...s, holder: 'impostor', handoffAt: s.t, events: ['handoff'] }; }
+
+  /* Decisão para uma ação de valor L (§16, §22 passo 4). */
+  function decideAction(s, p, L) {
+    const thr = phiThreshold(p, L);
+    const lamM = s.recent.reduce((a, b) => a + b, 0);
+    const lamStar = lambdaStar(p, L);
+    const fixedWindowStepUp = lamM < lamStar;
+    const base = { L, thr, phi: s.phi, lamM, lamStar, fixedWindowStepUp, margin: Math.log10(thr / Math.max(s.phi, 1e-300)) };
+    if (s.revoked) return { ...base, ok: false, code: 'revoked', why: 'Sessão revogada: exige novo fator forte.' };
+    if (![s.phi, s.C, s.S, s.Lambda].every(Number.isFinite)) return { ...base, ok: false, code: 'invalid', why: 'Estado numérico inválido: falha fechada, step-up.' };
+    if (s.C > p.h || s.stepUpPending === 'cusum') return { ...base, ok: false, code: 'cusum', why: `Alarme do CUSUM (C = ${s.C.toFixed(2)} > h = ${p.h}).` };
+    if (s.stepUpPending === 'sprt') return { ...base, ok: false, code: 'sprt', why: `SPRT cruzou ln A = ${lnA(s.r).toFixed(1)} (Λ = ${s.Lambda.toFixed(2)}): step-up pendente.` };
+    if (s.stepUpPending === 'score') return { ...base, ok: false, code: 'score', why: `Score de sessão S = ${s.S.toFixed(2)} abaixo de S_min = ${p.Smin}.` };
+    if (L > p.Lmax) return { ...base, ok: false, code: 'ceiling', why: `Valor acima do teto L_max: step-up determinístico (§16.3).` };
+    if (s.phi > thr) return { ...base, ok: false, code: 'shiryaev', why: `Posterior de Shiryaev φ = ${fmtSci(s.phi)} acima de c_u/[L(1−FAR_u)] = ${fmtSci(thr)}.` };
+    if (s.phi === 0) return { ...base, ok: true, code: 'ok', why: `φ = 0 (nenhuma evidência de troca ainda); limiar ${fmtSci(thr)}.` };
+    return { ...base, ok: true, code: 'ok', why: `φ = ${fmtSci(s.phi)} fica ${base.margin.toFixed(1)} décadas abaixo do limiar ${fmtSci(thr)}.` };
+  }
+
+  function fmtSci(x) {
+    if (!isFinite(x)) return String(x);
+    if (x === 0) return '0';
+    const e = Math.floor(Math.log10(Math.abs(x)));
+    if (e >= -2 && e <= 3) return x.toPrecision(3);
+    return (x / Math.pow(10, e)).toFixed(2) + '×10^' + e;
+  }
+
+  /* ---------- Utilidades numéricas ---------- */
+  // Φ via erfc (ajuste de Chebyshev do Numerical Recipes, erro fracionário < 1,2e-7; suficiente aqui)
+  function Phi(x) { return 0.5 * erfc(-x / Math.SQRT2); }
+  function erfc(x) {
+    const z = Math.abs(x);
+    const t = 1 / (1 + 0.5 * z);
+    const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 +
+      t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+    return x >= 0 ? r : 2 - r;
+  }
+  // E[α^{1−m}]/α para m ~ N(0,σ²) truncada em [a,b): forma fechada (§9.4, C1)
+  function c1Closed(t, sigma, a, b) {
+    const s2 = sigma * sigma;
+    const num = Phi((b - t * s2) / sigma) - Phi((a - t * s2) / sigma);
+    const den = Phi(b / sigma) - Phi(a / sigma);
+    return Math.exp(0.5 * t * t * s2) * num / den;
+  }
+  // mesma esperança por integração numérica (Simpson) — confere a forma fechada
+  function c1Numeric(t, sigma, a, b, N = 20000) {
+    const lo = Math.max(a, -12 * sigma), hi = Math.min(b, 12 * sigma);
+    const f = x => Math.exp(t * x) * Math.exp(-x * x / (2 * sigma * sigma));
+    const g = x => Math.exp(-x * x / (2 * sigma * sigma));
+    const simpson = fn => { const h = (hi - lo) / N; let s = fn(lo) + fn(hi); for (let i = 1; i < N; i++) s += fn(lo + i * h) * (i % 2 ? 4 : 2); return s * h / 3; };
+    return simpson(f) / simpson(g);
+  }
+  function lag1Autocorr(xs) {
+    const n = xs.length; if (n < 3) return 0;
+    const m = xs.reduce((a, b) => a + b, 0) / n;
+    let num = 0, den = 0;
+    for (let i = 0; i < n; i++) { den += (xs[i] - m) ** 2; if (i) num += (xs[i] - m) * (xs[i - 1] - m); }
+    return den > 0 ? num / den : 0;
+  }
+
+  /* ============================================================
+     Monte Carlo (laços escalares, sem objetos) — Apêndice C
+     ============================================================ */
+  // atraso do CUSUM após troca de posse; dono usa 60 passos antes (Ap. C)
+  function mcCusumDelay(p, N, seed, opt = {}) {
+    const rng = makeRng(seed), warm = opt.warm ?? 60, horizon = opt.horizon ?? 900;
+    let sumD = 0, n30 = 0, n60 = 0, n120 = 0, det = 0;
+    for (let i = 0; i < N; i++) {
+      const src = makeSource(p, rng), gate = makeGate(p, rng);
+      let C = 0;
+      for (let k = 0; k < warm; k++) { const q = gate.next(); if (!q) continue; const { l } = src.next('owner'); C = Math.max(0, C - l - p.nu); if (C > p.h) C = 0; }
+      let D = -1;
+      for (let k = 1; k <= horizon; k++) {
+        const q = gate.next(); if (!q) continue;
+        const { l } = src.next('impostor'); C = Math.max(0, C - l - p.nu);
+        if (C > p.h) { D = k; break; }
+      }
+      if (D < 0) D = horizon + 1; else det++;
+      const Ds = D * DELTA; sumD += Ds; if (Ds <= 30) n30++; if (Ds <= 60) n60++; if (Ds <= 120) n120++;
+    }
+    return { meanD: sumD / N, p30: n30 / N, p60: n60 / N, p120: n120 / N, detected: det / N, N };
+  }
+  // falsos alarmes por hora de uso genuíno (step-up aprovado reinicia C)
+  function mcFAPH(p, hours, seed) {
+    const rng = makeRng(seed), src = makeSource(p, rng), gate = makeGate(p, rng);
+    const steps = Math.round(hours * 3600 / DELTA);
+    let C = 0, alarms = 0, active = 0;
+    for (let k = 0; k < steps; k++) {
+      const q = gate.next(); if (!q) continue; active++;
+      const { l } = src.next('owner'); C = Math.max(0, C - l - p.nu);
+      if (C > p.h) { alarms++; C = 0; }
+    }
+    return { faph: alarms / hours, alarms, hours, activeFraction: active / steps };
+  }
+  // ARL0 em passos (uso genuíno)
+  function mcARL0(p, N, seed, cap = 200000) {
+    const rng = makeRng(seed); let total = 0;
+    for (let i = 0; i < N; i++) {
+      const src = makeSource(p, rng); let C = 0, k = 0;
+      while (k < cap) { k++; const { l } = src.next('owner'); C = Math.max(0, C - l - p.nu); if (C > p.h) break; }
+      total += k;
+    }
+    return { arl0: total / N, N };
+  }
+  // primeira passagem Λ ≥ t sob o dono (paridade, Tabela 4/5c)
+  function mcParity(p, N, seed, t = LN_FACEID, horizon = 900) {
+    const rng = makeRng(seed); const times = []; let n60 = 0;
+    for (let i = 0; i < N; i++) {
+      const src = makeSource(p, rng); let L = 0, k = 0;
+      while (k < horizon) { k++; L += src.next('owner').l; if (L >= t) break; }
+      const s = k * DELTA; times.push(s); if (L >= t && s <= 60) n60++;
+    }
+    times.sort((a, b) => a - b);
+    const mean = times.reduce((a, b) => a + b, 0) / N;
+    return { mean, p90: times[Math.floor(0.9 * N)], within60: n60 / N, N };
+  }
+  // P_I(sup_k Λ_k ≥ t) em horizonte fixo (limite de Ville ≤ e^{−t}); gateOnScore reproduz o erro C6
+  function mcVille(p, N, seed, t, horizon) {
+    const rng = makeRng(seed); let hits = 0;
+    for (let i = 0; i < N; i++) {
+      const src = makeSource(p, rng); let L = 0;
+      for (let k = 0; k < horizon; k++) {
+        const { l } = src.next('impostor');
+        if (p.gateOnScore && l < p.gateCut) continue;   // viés de seleção (proibido pela §7)
+        L += l; if (L >= t) { hits++; break; }
+      }
+    }
+    return { pSup: hits / N, bound: Math.exp(-t), N };
+  }
+  // portões no instante da ação (Tabela 12/14b): A só CUSUM, B janela fixa, C Shiryaev
+  function mcValueGates(p, N, seed, Ta, L, opt = {}) {
+    const rng = makeRng(seed), warm = opt.warm ?? 60, stepsTa = Math.round(Ta / DELTA);
+    const thr = phiThreshold(p, L), lamStar = lambdaStar(p, L);
+    let lossA = 0, lossB = 0, lossC = 0, fricB = 0, fricC = 0;
+    for (let i = 0; i < N; i++) {
+      const src = makeSource(p, rng);
+      let C = 0, phi = 0; const win = [];
+      const push = l => { win.push(l); if (win.length > p.M) win.shift(); };
+      for (let k = 0; k < warm; k++) { const { l } = src.next('owner'); C = Math.max(0, C - l - p.nu); phi = (phi + p.varpi) * Math.exp(-l) / (1 - p.varpi); if (C > p.h) { C = 0; phi = 0; } push(l); }
+      // fricção do dono: ação agora
+      const lamM0 = win.reduce((a, b) => a + b, 0);
+      if (lamM0 < lamStar) fricB++; if (phi > thr) fricC++;
+      // troca e ação após Ta
+      let alarmed = false;
+      for (let k = 0; k < stepsTa; k++) { const { l } = src.next('impostor'); C = Math.max(0, C - l - p.nu); if (C > p.h) alarmed = true; phi = (phi + p.varpi) * Math.exp(-l) / (1 - p.varpi); push(l); }
+      const lamM = win.reduce((a, b) => a + b, 0);
+      if (!alarmed) { lossA++; if (!(lamM < lamStar)) lossB++; if (!(phi > thr)) lossC++; }
+    }
+    return { lossA: lossA / N, lossB: lossB / N, lossC: lossC / N, fricB: fricB / N, fricC: fricC / N, N };
+  }
+  // atraso sob abstenção markoviana; dono usa 60 passos antes da troca (mesma convenção da Tabela 10 / E.2)
+  function mcMarkovDelay(p, N, seed, opt = {}) {
+    const rng = makeRng(seed), warm = opt.warm ?? 60, horizon = opt.horizon ?? 5000; let sum = 0;
+    for (let i = 0; i < N; i++) {
+      const src = makeSource(p, rng), gate = makeGate(p, rng); let C = 0, k = 0;
+      for (let j = 0; j < warm; j++) { const q = gate.next(); if (!q) continue; const { l } = src.next('owner'); C = Math.max(0, C - l - p.nu); if (C > p.h) C = 0; }
+      while (k < horizon) { k++; const q = gate.next(); if (!q) continue; const { l } = src.next('impostor'); C = Math.max(0, C - l - p.nu); if (C > p.h) break; }
+      sum += k;
+    }
+    return { meanSteps: sum / N, N };
+  }
+  // momentos do incremento branqueado (Prop. 9)
+  function mcWhitenMoments(p, N, seed) {
+    const rng = makeRng(seed), src = makeSource({ ...p, treatment: 'whiten' }, rng); const xs = [];
+    src.next('owner');
+    for (let i = 0; i < N; i++) xs.push(src.next('owner').l);
+    const mean = xs.reduce((a, b) => a + b, 0) / N;
+    const v = xs.reduce((a, b) => a + (b - mean) ** 2, 0) / (N - 1);
+    return { mean, variance: v, ratio: v / mean, rho1: lag1Autocorr(xs), V: src.V, mu: src.mu, N };
+  }
+
+  /* ============================================================
+     Bateria de testes com semente fixa (referências: tabelas do preprint)
+     tol = tolerância absoluta considerando erro de Monte Carlo e arredondamento das tabelas
+     ============================================================ */
+  function pass(got, ref, tol) { return Math.abs(got - ref) <= tol; }
+  const TESTS = [
+    { id: 'T1', name: 'Limite de Ville (Prop. 1): P_I(sup Λ ≥ ln 10³) ≤ 10⁻³, 5 min', ref: 'Tabela 4/5: ≈4×10⁻⁴ (≤10⁻³)',
+      run: s => { const r = mcVille({ ...defaults() }, 250000, s, Math.log(1000), 150); return { got: r.pSup, text: `${r.pSup.toExponential(2)} (limite 1,0×10⁻³; n = ${r.N}, ≈${Math.round(r.pSup * r.N)} eventos)`, ok: r.pSup <= 1e-3 && pass(r.pSup, 4e-4, 1.2e-4) }; } },
+    { id: 'T2', name: 'Paridade com Face ID por renovação única (Tabela 4): tempo até Λ ≥ ln 10⁶', ref: 'média 26,7 s; P90 40 s; 99,5 % em 60 s',
+      run: s => { const r = mcParity(defaults(), 20000, s); return { got: r.mean, text: `média ${r.mean.toFixed(1)} s; P90 ${r.p90} s; ${(100 * r.within60).toFixed(1)} % em 60 s`, ok: pass(r.mean, 26.7, 0.8) && pass(r.p90, 40, 4) && pass(r.within60, 0.995, 0.004) }; } },
+    { id: 'T3', name: 'Calibração do CUSUM (Tabela 10, d′=1,5, h=8): atraso e falso alarme', ref: 'E[D] 15,1 s; P(D≤30 s) 97 %; FAPH 0,12',
+      run: s => { const d = mcCusumDelay(defaults(), 20000, s); const f = mcFAPH(defaults(), 3000, s + 1); return { got: d.meanD, text: `E[D] ${d.meanD.toFixed(1)} s; P(D≤30) ${(100 * d.p30).toFixed(1)} %; FAPH ${f.faph.toFixed(3)} (${f.alarms} alarmes/${f.hours} h)`, ok: pass(d.meanD, 15.1, 0.5) && pass(d.p30, 0.97, 0.01) && pass(f.faph, 0.12, 0.035) }; } },
+    { id: 'T4', name: 'C6: abster por escore (descartar ℓ<−0,5) destrói a garantia de Ville', ref: 'FA 4×10⁻⁴ → 0,9997 (§7)',
+      run: s => { const a = mcVille(defaults(), 100000, s, Math.log(1000), 150); const b = mcVille({ ...defaults(), gateOnScore: true }, 20000, s + 7, Math.log(1000), 150); return { got: b.pSup, text: `gate ancilar ${a.pSup.toExponential(2)} → gate por escore ${b.pSup.toFixed(4)}`, ok: a.pSup <= 1e-3 && b.pSup > 0.99 }; } },
+    { id: 'T5', name: 'Dependência AR(1) ρ=0,3 (Tabela 13): ingênuo × deflação por V', ref: 'FAPH 1,84 ingênuo; 0,045 deflacionado; ref. 0,12',
+      run: s => { const base = { ...defaults(), rho: 0.3 }; const n = mcFAPH(base, 1500, s); const d = mcFAPH({ ...base, treatment: 'deflate' }, 3000, s + 1); return { got: n.faph, text: `ingênuo ${n.faph.toFixed(2)}/h; deflacionado ${d.faph.toFixed(3)}/h (V = ${((1.3) / 0.7).toFixed(2)})`, ok: pass(n.faph, 1.84, 0.25) && pass(d.faph, 0.045, 0.03) }; } },
+    { id: 'T6', name: 'Branqueamento por inovações (Prop. 9, Tabela E.1, ρ=0,3, h=8)', ref: 'FAPH 0,106; E[D] 26,2 s; incrementos com var = 2×média, ρ₁≈0',
+      run: s => { const p = { ...defaults(), rho: 0.3, treatment: 'whiten' }; const f = mcFAPH(p, 3000, s); const dIid = mcCusumDelay({ ...p, treatment: 'whiten-iid' }, 20000, s + 1); const dTr = mcCusumDelay(p, 20000, s + 3); const m = mcWhitenMoments(p, 200000, s + 2); return { got: dIid.meanD, text: `FAPH ${f.faph.toFixed(3)}; E[D] ${dIid.meanD.toFixed(1)} s (i.i.d., como na Tabela E.1); ${dTr.meanD.toFixed(1)} s com a 1ª inovação pós-troca herdando y do dono (mais rápido, como a §E.1 prevê); var/média ${m.ratio.toFixed(2)}; ρ₁ ${m.rho1.toFixed(3)}`, ok: pass(f.faph, 0.106, 0.035) && pass(dIid.meanD, 26.2, 0.7) && dTr.meanD < dIid.meanD && pass(m.ratio, 2, 0.05) && Math.abs(m.rho1) < 0.01 }; } },
+    { id: 'T7', name: 'Imitador m=0,5 (Tabela 14a): degradação gradual', ref: 'E[D] 26,8 s; P(D≤30) 69,9 %; P(D≤60) 96,1 %',
+      run: s => { const r = mcCusumDelay({ ...defaults(), m: 0.5 }, 20000, s, { horizon: 1800 }); return { got: r.meanD, text: `E[D] ${r.meanD.toFixed(1)} s; P(D≤30) ${(100 * r.p30).toFixed(1)} %; P(D≤60) ${(100 * r.p60).toFixed(1)} %`, ok: pass(r.meanD, 26.8, 0.8) && pass(r.p30, 0.699, 0.012) && pass(r.p60, 0.961, 0.006) }; } },
+    { id: 'T8', name: 'Portão por valor (Tabela 12): troca e TED R$ 50 mil em T_a = 10 s', ref: 'perda A 69,7 %, B 52,2 %, C 1,1 %; fricção C 28,3 %',
+      run: s => { const r = mcValueGates(defaults(), 40000, s, 10, 50000); return { got: r.lossC, text: `perda A ${(100 * r.lossA).toFixed(1)} %, B ${(100 * r.lossB).toFixed(1)} %, C ${(100 * r.lossC).toFixed(2)} %; fricção B ${(100 * r.fricB).toFixed(2)} %, C ${(100 * r.fricC).toFixed(1)} %`, ok: pass(r.lossA, 0.697, 0.012) && pass(r.lossB, 0.522, 0.012) && pass(r.lossC, 0.011, 0.004) && pass(r.fricC, 0.283, 0.015) }; } },
+    { id: 'T9', name: 'Prop. 10 (Tabela E.2): atraso sob abstenção markoviana', ref: 'Tabela E.2: 10,8 passos (aprox. 11,1) e 14,2 (14,7); aproximação superestima 3–5 %',
+      run: s => { const a = mcMarkovDelay({ ...defaults(), p01: 0.5, p10: 0.2 }, 20000, s); const b = mcMarkovDelay({ ...defaults(), p01: 0.1, p10: 0.05 }, 20000, s + 1); const approx = (p01, p10) => { const qb = p01 / (p01 + p10); return (1 - qb) / p01 + 7.55 / qb; }; const exact = (p01, p10) => approx(p01, p10) - p10 / p01; return { got: a.meanSteps, text: `${a.meanSteps.toFixed(2)} passos (aprox. ${approx(0.5, 0.2).toFixed(2)}, +${(100 * (approx(0.5, 0.2) / a.meanSteps - 1)).toFixed(1)} %; com a correção de Wald −p₁₀/p₀₁: ${exact(0.5, 0.2).toFixed(2)}); ${b.meanSteps.toFixed(2)} passos (aprox. ${approx(0.1, 0.05).toFixed(2)}, +${(100 * (approx(0.1, 0.05) / b.meanSteps - 1)).toFixed(1)} %; corrigida ${exact(0.1, 0.05).toFixed(2)}) — CUSUM parte do estado estacionário do dono, como na Tabela 10`, ok: pass(a.meanSteps, 10.8, 0.3) && pass(b.meanSteps, 14.2, 0.35) && a.meanSteps < approx(0.5, 0.2) && b.meanSteps < approx(0.1, 0.05) }; } },
+    { id: 'T10', name: 'C1: forma fechada da normal truncada (§9.4) × integração numérica', ref: '8,56α (−∞,1); 8,90α retificado; 16,8α meia-normal [0,1)',
+      run: () => { const t = Math.log(1e6), sg = 0.15; const up = c1Closed(t, sg, -40, 1), half = c1Closed(t, sg, 0, 1), rect = 0.5 * 1 + 0.5 * half, nUp = c1Numeric(t, sg, -40, 1), nHalf = c1Numeric(t, sg, 0, 1); return { got: half, text: `${up.toFixed(2)}α / ${rect.toFixed(2)}α / ${half.toFixed(2)}α (numérico ${nUp.toFixed(2)} / ${nHalf.toFixed(2)})`, ok: pass(up, 8.56, 0.02) && pass(rect, 8.90, 0.02) && pass(half, 16.8, 0.1) && pass(nHalf, half, 0.02) }; } },
+    { id: 'T11', name: 'C8: margem ν=0,3, h=4 — ARL₀ simulado × limite e^{(1+ν/μ)h}', ref: 'ARL₀ ≈ 764 passos ≥ 159 (eq. 67)',
+      run: s => { const p = { ...defaults(), nu: 0.3, h: 4 }; const r = mcARL0(p, 4000, s); const bound = Math.exp((1 + 0.3 / 1.125) * 4); return { got: r.arl0, text: `ARL₀ ${r.arl0.toFixed(0)} passos; limite ${bound.toFixed(0)}; e^h = ${Math.exp(4).toFixed(0)}`, ok: pass(r.arl0, 764, 60) && r.arl0 >= bound }; } },
+    { id: 'T12', name: 'Titular "cabra" κ=0,5 (Tabelas 5c e 17a): fricção e tempo até a paridade', ref: 'FAPH 4,06 (33×); paridade média 52,7 s; 70,5 % em 60 s',
+      run: s => { const p = { ...defaults(), kappa: 0.5 }; const f = mcFAPH(p, 600, s); const r = mcParity(p, 10000, s + 1); return { got: f.faph, text: `FAPH ${f.faph.toFixed(2)}; paridade média ${r.mean.toFixed(1)} s; ${(100 * r.within60).toFixed(1)} % em 60 s`, ok: pass(f.faph, 4.06, 0.35) && pass(r.mean, 52.7, 2.0) && pass(r.within60, 0.705, 0.02) }; } },
+  ];
+  function runTests(seed = 20261025, onEach) {
+    const out = [];
+    for (let i = 0; i < TESTS.length; i++) {
+      const t = TESTS[i]; const t0 = now();
+      let res;
+      try { res = t.run(seed + 1000 * i); } catch (e) { res = { got: NaN, text: 'erro: ' + e.message, ok: false }; }
+      const row = { id: t.id, name: t.name, ref: t.ref, got: res.text, ok: !!res.ok, ms: now() - t0 };
+      out.push(row); if (onEach) onEach(row);
+    }
+    return out;
+  }
+  const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  return {
+    DELTA, ALPHA_SESS, BETA, LN_FACEID, defaults, makeRng, makeSource, makeGate,
+    alphaR, lnB, lnA, phiThreshold, lambdaStar, newSession, stepSession, resolveStepUp, revoke, strongFactor, handoff, decideAction,
+    Phi, c1Closed, c1Numeric, lag1Autocorr, fmtSci,
+    mcCusumDelay, mcFAPH, mcARL0, mcParity, mcVille, mcValueGates, mcMarkovDelay, mcWhitenMoments,
+    TESTS, runTests,
+  };
+})();
+if (typeof module !== 'undefined') module.exports = AuthEngine;
+
+</script>
+<script>
+/* ============================================================
+   Cena 3D em canvas 2D (sem WebGL, sem dependências): aparelho como corpo rígido,
+   eixos do corpo (x_B largura, y_B comprimento, z_B saindo da tela), eixos do mundo
+   (ENU, z para cima), vetores g (gravidade), ĝ (direção estimada da reação à gravidade),
+   ω (velocidade angular, corpo) e a_lin (aceleração linear, corpo). Convenção §4:
+   v^I = q_IB ⊗ v^B ⊗ q_IB*, com q = [w,x,y,z].
+   ============================================================ */
+'use strict';
+const View3D = (() => {
+  const W = 0.072, H = 0.150, D = 0.0085;          // m: largura, comprimento, espessura
+  const qMul = (a, b) => [a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3], a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2], a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1], a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0]];
+  const qConj = q => [q[0], -q[1], -q[2], -q[3]];
+  const qNorm = q => { const n = Math.hypot(...q) || 1; return q.map(v => v / n); };
+  const rot = (q, v) => { const r = qMul(qMul(q, [0, v[0], v[1], v[2]]), qConj(q)); return [r[1], r[2], r[3]]; };   // corpo → mundo
+  const qFromEuler = (roll, pitch, yaw) => {                                 // ZYX (φ em x_B, θ em y_B, ψ em z)
+    const cr = Math.cos(roll / 2), sr = Math.sin(roll / 2), cp = Math.cos(pitch / 2), sp = Math.sin(pitch / 2), cy = Math.cos(yaw / 2), sy = Math.sin(yaw / 2);
+    return [cr * cp * cy + sr * sp * sy, sr * cp * cy - cr * sp * sy, cr * sp * cy + sr * cp * sy, cr * cp * sy - sr * sp * cy];
+  };
+  const qExp = phi => { const a = Math.hypot(...phi); if (a < 1e-12) return [1, 0, 0, 0]; const s = Math.sin(a / 2) / a; return [Math.cos(a / 2), phi[0] * s, phi[1] * s, phi[2] * s]; };
+  // velocidade angular no corpo a partir de dois quaternions consecutivos: ω ≈ 2·vec(q₁* ⊗ q₂)/Δt
+  const omegaFrom = (q1, q2, dt) => { const d = qMul(qConj(q1), q2); const s = d[0] < 0 ? -1 : 1; return [2 * s * d[1] / dt, 2 * s * d[2] / dt, 2 * s * d[3] / dt]; };
+
+  /* Filtro de Madgwick IMU-only na convenção q_IB (eq. 19; resíduo f e Jacobiano J explícitos, C3).
+     â = a_m/|a_m| deve apontar para +z_I em repouso (reação à gravidade). */
+  function madgwick(q, gyro, acc, dt, beta = 0.08) {
+    const [w, x, y, z] = q;
+    let qd = qMul(q, [0, gyro[0], gyro[1], gyro[2]]).map(v => 0.5 * v);
+    const an = Math.hypot(...acc);
+    if (an > 1e-6) {
+      const ax = acc[0] / an, ay = acc[1] / an, az = acc[2] / an;
+      const f = [2 * (x * z - w * y) - ax, 2 * (w * x + y * z) - ay, w * w - x * x - y * y + z * z - az];
+      const J = [[-2 * y, 2 * z, -2 * w, 2 * x], [2 * x, 2 * w, 2 * z, 2 * y], [2 * w, -2 * x, -2 * y, 2 * z]];
+      const g = [0, 1, 2, 3].map(j => J[0][j] * f[0] + J[1][j] * f[1] + J[2][j] * f[2]);
+      const gn = Math.hypot(...g);
+      if (gn > 1e-9) qd = qd.map((v, i) => v - beta * g[i] / gn);
+    }
+    return qNorm(q.map((v, i) => v + qd[i] * dt));
+  }
+
+  /* ---------- cena ---------- */
+  function makeScene(canvas) {
+    const st = { yaw: -0.65, pitch: 0.42, dist: 0.55, layers: { body: true, world: true, g: true, ghat: true, omega: true, alin: true, ghost: false }, drag: null, last: null };
+    const onDown = e => { st.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: st.yaw, pitch: st.pitch }; canvas.style.cursor = 'grabbing'; try { if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId); } catch {} };
+    const onMove = e => { if (!st.drag || (st.drag.id != null && e.pointerId !== st.drag.id)) return; st.yaw = st.drag.yaw + (e.clientX - st.drag.x) * 0.01; st.pitch = Math.max(-1.4, Math.min(1.4, st.drag.pitch + (e.clientY - st.drag.y) * 0.01)); if (st.last) draw(canvas, st, st.last); };
+    const onUp = e => { if (st.drag && st.drag.id != null) { try { if (canvas.releasePointerCapture) canvas.releasePointerCapture(st.drag.id); } catch {} } st.drag = null; canvas.style.cursor = 'grab'; };
+    canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove); canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onUp);
+    canvas.style.touchAction = 'none';
+    canvas.style.cursor = 'grab';
+    return { st, render(state) { st.last = state; draw(canvas, st, state); }, preset(name) { const p = { tq: [-0.65, 0.42], user: [0, 0.05], side: [-1.5708, 0.02], top: [0, 1.4] }[name]; if (p) { st.yaw = p[0]; st.pitch = p[1]; if (st.last) draw(canvas, st, st.last); } }, toggle(k, v) { st.layers[k] = v; if (st.last) draw(canvas, st, st.last); } };
+  }
+
+  function draw(cv, st, S) {
+    if (!cv || cv.offsetParent === null) return;
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    const css = getComputedStyle(document.documentElement), col = v => css.getPropertyValue(v).trim();
+    const C = { bg: col('--panel2'), line: col('--line'), muted: col('--muted'), fg: col('--fg'), x: '#e05252', y: '#3bb75e', z: '#3b82f6', g: col('--fg'), ghat: col('--accent'), om: col('--violet'), al: '#f59e0b', screen: col('--info') };
+    const q = S.q || [1, 0, 0, 0];
+    // câmera orbital: v = Rx(pitch)·Rz(yaw)·p ; profundidade = v.y
+    const cy = Math.cos(st.yaw), sy = Math.sin(st.yaw), cp = Math.cos(st.pitch), sp = Math.sin(st.pitch);
+    const f = Math.min(w, h) * 1.15, cx = w / 2, cyy = h / 2 + 6;
+    const view = p => { const x1 = cy * p[0] - sy * p[1], y1 = sy * p[0] + cy * p[1], z1 = p[2]; return [x1, cp * y1 - sp * z1, sp * y1 + cp * z1]; };
+    const proj = v => { const s = f / (st.dist + v[1]); return [cx + v[0] * s, cyy - v[2] * s, s]; };
+    const P = p => proj(view(p));
+    const world = pb => rot(q, pb);
+    // chão (grade no plano z = −0.11)
+    ctx.lineWidth = 1; ctx.strokeStyle = C.line;
+    for (let i = -4; i <= 4; i++) { const a = P([i * 0.05, -0.2, -0.11]), b = P([i * 0.05, 0.2, -0.11]), c = P([-0.2, i * 0.05, -0.11]), d = P([0.2, i * 0.05, -0.11]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.moveTo(c[0], c[1]); ctx.lineTo(d[0], d[1]); ctx.stroke(); }
+    // caixa do aparelho (corpo), faces com pintor
+    const hx = W / 2, hy = H / 2, hz = D / 2;
+    const V = [[-hx, -hy, -hz], [hx, -hy, -hz], [hx, hy, -hz], [-hx, hy, -hz], [-hx, -hy, hz], [hx, -hy, hz], [hx, hy, hz], [-hx, hy, hz]].map(world);
+    const faces = [{ i: [4, 5, 6, 7], n: [0, 0, 1], screen: true }, { i: [0, 3, 2, 1], n: [0, 0, -1] }, { i: [0, 1, 5, 4], n: [0, -1, 0] }, { i: [2, 3, 7, 6], n: [0, 1, 0] }, { i: [1, 2, 6, 5], n: [1, 0, 0] }, { i: [0, 4, 7, 3], n: [-1, 0, 0] }];
+    const light = [0.3, -0.6, 0.74];
+    const fv = faces.map(fc => { const vs = fc.i.map(k => view(V[k])); const nW = world(fc.n); const sh = 0.55 + 0.45 * Math.max(0, nW[0] * light[0] + nW[1] * light[1] + nW[2] * light[2]); return { ...fc, vs, depth: vs.reduce((a, v) => a + v[1], 0) / 4, sh }; }).sort((a, b) => b.depth - a.depth);
+    const dark = css.getPropertyValue('color-scheme').trim() === 'dark';
+    for (const fc of fv) {
+      const ps = fc.vs.map(proj); ctx.beginPath(); ps.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+      const base = fc.screen ? (dark ? 30 : 40) : (dark ? 90 : 160); const v = Math.round(base * fc.sh);
+      ctx.fillStyle = fc.screen ? `rgb(${v},${v + 12},${v + 30})` : `rgb(${v},${v},${v})`; ctx.fill(); ctx.strokeStyle = dark ? '#5b6b7b' : '#334155'; ctx.lineWidth = 1; ctx.stroke();
+      if (fc.screen) { // moldura e ilha/câmera como pista de orientação
+        const a = world([-hx * 0.8, -hy * 0.9, hz + 0.0005]), b = world([hx * 0.8, -hy * 0.9, hz + 0.0005]), c = world([hx * 0.8, hy * 0.85, hz + 0.0005]), d = world([-hx * 0.8, hy * 0.85, hz + 0.0005]);
+        const pp = [a, b, c, d].map(P); ctx.beginPath(); pp.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.strokeStyle = C.screen; ctx.stroke();
+        const cam = P(world([0, hy * 0.93, hz + 0.0005])); ctx.beginPath(); ctx.arc(cam[0], cam[1], 2.5, 0, 7); ctx.fillStyle = C.screen; ctx.fill();
+      }
+    }
+    const arrow = (from, to, color, label, width = 2) => {
+      const a = P(from), b = P(to); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      const ang = Math.atan2(b[1] - a[1], b[0] - a[0]), L = 9; ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - L * Math.cos(ang - 0.4), b[1] - L * Math.sin(ang - 0.4)); ctx.lineTo(b[0] - L * Math.cos(ang + 0.4), b[1] - L * Math.sin(ang + 0.4)); ctx.closePath(); ctx.fill();
+      if (label) { ctx.font = '600 11px ' + col('--mono'); ctx.fillText(label, b[0] + 6, b[1] - 4); }
+    };
+    const Lb = 0.11, Lw = 0.08;
+    if (st.layers.world) { const o = [-0.19, 0.19, -0.11]; arrow(o, [o[0] + Lw, o[1], o[2]], C.muted, 'E'); arrow(o, [o[0], o[1] + Lw, o[2]], C.muted, 'N'); arrow(o, [o[0], o[1], o[2] + Lw], C.muted, 'z↑'); }
+    if (st.layers.body) { arrow([0, 0, 0], world([Lb, 0, 0]), C.x, 'x_B'); arrow([0, 0, 0], world([0, Lb, 0]), C.y, 'y_B'); arrow([0, 0, 0], world([0, 0, Lb]), C.z, 'z_B'); }
+    if (st.layers.g) arrow([0, 0, 0], [0, 0, -0.12], C.g, 'g', 2.5);
+    if (st.layers.ghat && S.ghat) { const gw = world(S.ghat); arrow([0, 0, 0], gw.map(v => v * 0.12), C.ghat, 'ĝ (reação)', 2.5); }
+    if (st.layers.omega && S.omega) { const n = Math.hypot(...S.omega); if (n > 1e-4) { const sc = Math.min(0.16, 0.06 + 0.1 * Math.min(1, n / 2)); arrow([0, 0, 0], world(S.omega).map(v => v / n * sc), C.om, `ω ${n.toFixed(2)} rad/s`); } }
+    if (st.layers.alin && S.alin) { const n = Math.hypot(...S.alin); if (n > 0.02) { const sc = Math.min(0.16, 0.03 + 0.12 * Math.min(1, n / 3)); arrow([0, 0, 0], world(S.alin).map(v => v / n * sc), C.al, `a_lin ${n.toFixed(2)} m/s²`); } }
+    // legenda de atitude responsiva (evita corte em telas estreitas de iPhone)
+    const [w0, x0, y0, z0] = q; const roll = Math.atan2(2 * (w0 * x0 + y0 * z0), 1 - 2 * (x0 * x0 + y0 * y0)), pitch = Math.asin(Math.max(-1, Math.min(1, 2 * (w0 * y0 - z0 * x0)))), yaw = Math.atan2(2 * (w0 * z0 + x0 * y0), 1 - 2 * (y0 * y0 + z0 * z0));
+    const zW = world([0, 0, 1]); const tilt = Math.acos(Math.max(-1, Math.min(1, zW[2]))) * 180 / Math.PI;
+    ctx.font = '10.5px ' + col('--mono'); ctx.fillStyle = C.muted; ctx.textAlign = 'left';
+    const qStr = `q_IB = [${q.map(v => v.toFixed(2)).join(', ')}]`, angStr = `φ ${(roll * 180 / Math.PI).toFixed(0)}°  θ ${(pitch * 180 / Math.PI).toFixed(0)}°  ψ ${(yaw * 180 / Math.PI).toFixed(0)}°  ·  inclinação ${tilt.toFixed(0)}°`;
+    if (w < 500) {
+      ctx.fillText(qStr, 10, h - 22);
+      ctx.fillText(angStr, 10, h - 8);
+    } else {
+      ctx.fillText(`${qStr}   ${angStr}`, 10, h - 8);
+    }
+    if (S.caption) { ctx.fillStyle = C.fg; ctx.font = '600 12px ' + col('--sans'); ctx.fillText(S.caption, 10, 18); }
+  }
+
+  /* Cinemática sintética para a simulação (ilustrativa: postura, oscilação lenta, microtremor) */
+  function makeKinematics() {
+    const K = { t: 0, cur: null, target: null, blend: 1, qPrev: [1, 0, 0, 0] };
+    const POSE = { owner: { roll: 35, pitch: 3, yaw: -10, swayA: 2.5, swayF: 0.25, tremA: 0.25, tremF: 9, linA: 0.25, linF: 1.0 }, impostor: { roll: 58, pitch: -9, yaw: 25, swayA: 6, swayF: 0.6, tremA: 0.5, tremF: 7, linA: 0.8, linF: 1.7 }, table: { roll: 0, pitch: 0, yaw: 0, swayA: 0, swayF: 0, tremA: 0, tremF: 0, linA: 0, linF: 0 } };
+    const lerp = (a, b, u) => { const o = {}; for (const k in a) o[k] = a[k] + (b[k] - a[k]) * u; return o; };
+    return {
+      set(holder) { const p = POSE[holder] || POSE.owner; if (!K.cur) { K.cur = p; K.target = p; K.blend = 1; } else if (K.target !== p) { K.cur = lerp(K.cur, K.target, K.blend); K.target = p; K.blend = 0; } },
+      step(dt) {
+        K.t += dt; if (K.blend < 1) K.blend = Math.min(1, K.blend + dt / 1.5);
+        const p = lerp(K.cur, K.target, K.blend), d2r = Math.PI / 180, t = K.t;
+        const roll = (p.roll + p.swayA * Math.sin(2 * Math.PI * p.swayF * t) + p.tremA * Math.sin(2 * Math.PI * p.tremF * t)) * d2r;
+        const pitch = (p.pitch + 0.6 * p.swayA * Math.sin(2 * Math.PI * p.swayF * 1.3 * t + 1) + 0.7 * p.tremA * Math.sin(2 * Math.PI * p.tremF * 1.1 * t)) * d2r;
+        const yaw = (p.yaw + 0.3 * p.swayA * Math.sin(2 * Math.PI * p.swayF * 0.7 * t)) * d2r;
+        const q = qFromEuler(roll, pitch, yaw);
+        const omega = omegaFrom(K.qPrev, q, Math.max(dt, 1e-3)); K.qPrev = q;
+        const alin = [p.linA * 0.4 * Math.sin(2 * Math.PI * p.linF * t), p.linA * Math.sin(2 * Math.PI * p.linF * 1.3 * t + 0.5), p.linA * 0.5 * Math.cos(2 * Math.PI * p.linF * t)];
+        const gW = [0, 0, 1]; const ghat = rot(qConj(q), gW);        // reação à gravidade vista no corpo (sem ruído: ĝ = R_I^B e_z)
+        return { q, omega, alin, ghat };
+      },
+    };
+  }
+  return { makeScene, madgwick, qFromEuler, qExp, qMul, qConj, qNorm, rot, omegaFrom, makeKinematics };
+})();
+
+</script>
+<script>
+/* ============================================================
+   Sensores reais (DeviceMotion ≈ 60 Hz): janelas de 4 s com salto de 2 s,
+   gating ancilar (§7), features (§6), template gaussiano (§8.3), LLR contra
+   modelo de impostor declarado (§11.3: nunca centrado no titular), deflação V=2
+   por sobreposição (§17.1), coerência toque–inércia (H9) e envelope háptico (C10).
+   ============================================================ */
+'use strict';
+const SensorLab = (() => {
+  const E = AuthEngine;
+  const FEAT_VERSION = 2;
+  const ENROLL_WINDOWS = 30;            // ≈ 60 s de janelas válidas
+  const CLIP_UP = 3;                    // corte superior do LLR (preserva supermartingale: e^{min(ℓ,c)} ≤ e^ℓ)
+  const N0 = 10;                        // pseudo-contagem do encolhimento da variância do template
+  const WINDOW_S = 4, MAX_GAP_S = 0.25;
+  // Prior de população DECLARADO (hipótese ilustrativa, não medido). Nunca é centrado no titular.
+  const FEAT = [
+    { k: 'la', name: 'log RMS |a_lin|', unit: 'm/s²', prior: [Math.log(0.25), 0.9], floor: 0 },
+    { k: 'lw', name: 'log RMS |ω|', unit: 'rad/s', prior: [Math.log(0.12), 0.9], floor: 0 },
+    { k: 'pv', name: 'log P_ω voluntária 0,5–4 Hz', unit: 'rad²/s²', prior: [Math.log(0.01), 1.4], floor: 0 },
+    { k: 'pt', name: 'log P_ω 4–12 Hz (tremor bruto, não normalizado)', unit: 'rad²/s²', prior: [Math.log(0.001), 1.4], tremor: true, floor: 0 },
+    { k: 'ax', name: 'â_x (lateral)', unit: '', prior: [0, 0.30], floor: 0.12 },
+    { k: 'ay', name: 'â_y (longitudinal)', unit: '', prior: [0.55, 0.30], floor: 0.12 },
+    { k: 'az', name: 'â_z (normal à tela)', unit: '', prior: [0.70, 0.30], floor: 0.12 },
+    { k: 'sw', name: 'oscilação postural std(â)', unit: '', prior: [0.06, 0.06], floor: 0.02 },
+    { k: 'lj', name: 'log RMS jerk (passa-baixas)', unit: 'm/s³', prior: [Math.log(2), 1.0], floor: 0 },
+    { k: 'he', name: 'entropia espectral de ω', unit: '', prior: [0.75, 0.12], floor: 0 },
+  ];
+  const mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+  const variance = a => { const m = mean(a); return a.reduce((x, y) => x + (y - m) ** 2, 0) / Math.max(1, a.length - 1); };
+  const rms = a => Math.sqrt(a.reduce((x, y) => x + y * y, 0) / Math.max(1, a.length));
+  const median = a => { const b = [...a].sort((x, y) => x - y); const n = b.length; return n ? (n % 2 ? b[(n - 1) / 2] : 0.5 * (b[n / 2 - 1] + b[n / 2])) : 0; };
+  const isIOS = () => typeof navigator !== 'undefined' && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+  // Periodograma por eixo (média removida por eixo, Hann normalizado por Σw²), somado nos eixos: invariante à rotação na janela (N2)
+  function bandPowers(axes, fs, bands) {
+    const n = axes[0].length, half = Math.floor(n / 2), spec = new Array(half).fill(0), p = bands.map(() => 0);
+    const w = new Array(n); let sw2 = 0;
+    for (let i = 0; i < n; i++) { w[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / Math.max(1, n - 1)); sw2 += w[i] * w[i]; }
+    const xs = axes.map(a => { const m = mean(a); return a.map((v, i) => (v - m) * w[i]); });
+    for (let k = 1; k < half; k++) {
+      const f = k * fs / n; if (f > 20) break;
+      let pw = 0; const om = 2 * Math.PI * k / n;
+      for (const x of xs) { let re = 0, im = 0; for (let i = 0; i < n; i++) { re += x[i] * Math.cos(om * i); im -= x[i] * Math.sin(om * i); } pw += 2 * (re * re + im * im) / (n * sw2); }
+      spec[k] = pw;
+      bands.forEach((b, j) => { if (f >= b[0] && f < b[1]) p[j] += pw; });
+    }
+    return { p, spec, df: fs / n };
+  }
+  function spectralEntropy(spec, df) {
+    const bins = []; for (let k = 1; k < spec.length; k++) { const f = k * df; if (f >= 0.5 && f <= 20) bins.push(spec[k]); }
+    const tot = bins.reduce((a, b) => a + b, 0); if (tot <= 0 || bins.length < 2) return 0;
+    let H = 0; for (const v of bins) { if (v > 0) { const q = v / tot; H -= q * Math.log(q); } }
+    return H / Math.log(bins.length);
+  }
+  function features(win, fs) {
+    const n = win.length;
+    const lin = win.map(s => Math.hypot(s.lx, s.ly, s.lz));
+    const wmag = win.map(s => Math.hypot(s.gx, s.gy, s.gz));
+    const la = rms(lin), lw = rms(wmag);
+    const bp = bandPowers([win.map(s => s.gx), win.map(s => s.gy), win.map(s => s.gz)], fs, [[0.5, 4], [4, 12]]);
+    const he = spectralEntropy(bp.spec, bp.df);
+    const hx = win.map(s => s.hx), hy = win.map(s => s.hy), hz = win.map(s => s.hz);
+    const ax = mean(hx), ay = mean(hy), az = mean(hz);
+    const sw = Math.sqrt(variance(hx) + variance(hy) + variance(hz));
+    // jerk com passa-baixas (média móvel de 3 amostras) antes da diferença: evita medir só o piso de ruído do MEMS
+    const sm = win.map((s, i) => { const a = win[Math.max(0, i - 1)], b = win[Math.min(n - 1, i + 1)]; return [(a.lx + s.lx + b.lx) / 3, (a.ly + s.ly + b.ly) / 3, (a.lz + s.lz + b.lz) / 3]; });
+    const jerk = []; for (let i = 1; i < n; i++) { const dt = Math.max(1e-3, win[i].t - win[i - 1].t); jerk.push(Math.hypot(sm[i][0] - sm[i - 1][0], sm[i][1] - sm[i - 1][1], sm[i][2] - sm[i - 1][2]) / dt); }
+    const rj = rms(jerk);
+    const maxA = Math.max(...win.map(s => Math.hypot(s.ax, s.ay, s.az))), maxW = Math.max(...wmag);
+    const vec = [Math.log(la + 1e-4), Math.log(lw + 1e-4), Math.log(bp.p[0] + 1e-8), Math.log(bp.p[1] + 1e-8), ax, ay, az, sw, Math.log(rj + 1e-3), he];
+    const tilt = Math.acos(Math.max(-1, Math.min(1, az))) * 180 / Math.PI;
+    return { vec, la, lw, pv: bp.p[0], pt: bp.p[1], ax, ay, az, sw, jerk: rj, he, maxA, maxW, n, tilt };
+  }
+  // Gating ANCILAR: só estatísticas de captura; nunca o valor ou o sinal de ℓ (§7, C6)
+  function gating(win, fs, f, extra = {}) {
+    const reasons = [], n = win.length;
+    const dts = win.map(s => s.dt), med = median(dts);
+    if (dts.some(d => d > Math.max(3 * med, MAX_GAP_S))) reasons.push('lacuna de amostragem (eq. 97)');
+    if (win[n - 1].t - win[0].t > 1.25 * WINDOW_S) reasons.push('janela com duração irregular');
+    if (extra.noGyro) reasons.push('sem giroscópio');
+    if (f.maxA > 35 || f.maxW > 15) reasons.push('saturação do sensor (eq. 98)');
+    if (f.lw < 0.01 || f.la < 0.03) reasons.push('sem movimento: aparelho parado ou sobre a mesa');
+    if (f.sw > 0.5) reasons.push('orientação instável');
+    if (extra.haptic) reasons.push('pulso háptico dentro da janela');
+    return { q: reasons.length ? 0 : 1, reasons };
+  }
+  function fitTemplate(vecs) {
+    const D = FEAT.length, mu = [], sd = [], n = vecs.length;
+    for (let j = 0; j < D; j++) {
+      const col = vecs.map(v => v[j]); const m = mean(col), s2 = variance(col);
+      const sp = 0.35 * FEAT[j].prior[1];
+      const shr = (n * s2 + N0 * sp * sp) / (n + N0);
+      mu.push(m); sd.push(Math.max(Math.sqrt(shr), 0.35 * FEAT[j].prior[1], FEAT[j].floor || 0));
+    }
+    return { mu, sd, n, v: FEAT_VERSION };
+  }
+  function validTemplate(t) {
+    return !!t && Array.isArray(t.mu) && Array.isArray(t.sd) && t.mu.length === FEAT.length && t.sd.length === FEAT.length &&
+      t.mu.every(Number.isFinite) && t.sd.every(x => Number.isFinite(x) && x > 0) && Number.isInteger(t.n) && t.n > 0 && t.v === FEAT_VERSION;
+  }
+
+  class Lab {
+    constructor(onEvent) { this.on = onEvent || (() => {}); this.reset(); }
+    reset() {
+      this.buf = []; this.fs = null; this.g = null; this.last = null; this.samplesSinceHop = 0; this.samples = 0; this._runSamples = 0; this.touches = 0;
+      this.windows = []; this.enroll = { owner: [], other: [] }; this.mode = 'idle'; this.skipWindows = 0;
+      this.template = null; this.cohort = null; this.useTremor = false;
+      this.p = { ...E.defaults() };
+      this.V = 2;                                   // §17.1: sobreposição de 50 % ⇒ ρ₁ = ½, ρ_{j≥2} = 0 ⇒ V = 1 + 2·½ = 2
+      this.permission = null; this.flipSign = isIOS(); this.noGyro = false;
+      this.q = [1, 0, 0, 0];                        // q_IB (Madgwick, eq. 19); yaw deriva sem magnetômetro
+      this.session = E.newSession(); this.lseries = []; this.h9 = { coh: 0, inc: 0, last: null }; this.pendingTap = null;
+      this.haptic = null; this.hapticTrack = null; this.hapticUntil = -1; this.running = false; this._starting = false; this.t0 = null; this.sessionLabel = 'owner'; this.labelChangedAt = 0;
+      if (!('onRaw' in this)) this.onRaw = null;
+    }
+    get supported() { return typeof window !== 'undefined' && 'DeviceMotionEvent' in window; }
+    get needsPermission() { return this.supported && typeof DeviceMotionEvent.requestPermission === 'function'; }
+    async start() {
+      if (this.running || this._starting) return;
+      if (!this.supported) throw new Error('DeviceMotionEvent indisponível neste navegador/contexto (abra o arquivo direto no celular, via HTTPS ou localmente).');
+      this._starting = true;
+      try {
+        if (this.needsPermission) {
+          try { this.permission = await DeviceMotionEvent.requestPermission(); } catch (e) { this.permission = 'error'; }
+          if (this.permission !== 'granted') this.on('warn', `Permissão de movimento: ${this.permission}. Ouvindo mesmo assim; em iOS toque em “Ativar sensores” de novo após permitir em Ajustes › Safari › Movimento e Orientação.`);
+        }
+        if (this._mh) window.removeEventListener('devicemotion', this._mh);
+        this._mh = ev => this.onMotion(ev); window.addEventListener('devicemotion', this._mh);
+        this.running = true; this.t0 = performance.now(); this.samplesSinceHop = 0; this._runSamples = 0; this.buf = []; this.last = null; this.g = null;
+        clearTimeout(this._watch);
+        this._watch = setTimeout(() => { if (this._runSamples === 0) { this.stop(); this.on('error', 'Nenhuma amostra recebida em 3 s: sensores bloqueados (visualizador embutido, desktop ou permissão).'); } }, 3000);
+      } finally { this._starting = false; }
+    }
+    stop() { if (this._mh) window.removeEventListener('devicemotion', this._mh); this._mh = null; clearTimeout(this._watch); this.running = false; this.pendingTap = null; this.on('stopped'); }
+    onMotion(ev) {
+      if (this.onRaw) { try { this.onRaw(ev); } catch (e) { /* gravação nunca derruba a análise */ } }
+      const a = ev.accelerationIncludingGravity, r = ev.rotationRate; if (!a || a.x == null) return;
+      const t = performance.now() / 1000;
+      const dt = this.last ? Math.min(5, Math.max(1e-3, t - this.last.t)) : (ev.interval ? ev.interval / 1000 : 1 / 60);
+      const d2r = Math.PI / 180, sg = this.flipSign ? -1 : 1;   // iOS/WebKit entrega gravidade com sinal oposto ao da spec (reação +z em repouso)
+      this.noGyro = !r || r.beta == null;
+      const s = { t, dt, ax: sg * a.x, ay: sg * a.y, az: sg * a.z, gx: (r && r.beta != null ? r.beta : 0) * d2r, gy: (r && r.gamma != null ? r.gamma : 0) * d2r, gz: (r && r.alpha != null ? r.alpha : 0) * d2r };
+      if (!this.g) this.g = [s.ax, s.ay, s.az];                                 // semente do passa-baixas na primeira amostra
+      const k = dt / (1 + dt);                                                  // passa-baixas τ = 1 s para a gravidade
+      this.g = [this.g[0] + k * (s.ax - this.g[0]), this.g[1] + k * (s.ay - this.g[1]), this.g[2] + k * (s.az - this.g[2])];
+      s.lx = s.ax - this.g[0]; s.ly = s.ay - this.g[1]; s.lz = s.az - this.g[2];
+      const gn = Math.hypot(...this.g) || 1; s.hx = this.g[0] / gn; s.hy = this.g[1] / gn; s.hz = this.g[2] / gn;
+      if (typeof View3D !== 'undefined') this.q = View3D.madgwick(this.q, [s.gx, s.gy, s.gz], [s.ax, s.ay, s.az], Math.min(dt, 0.1), this._runSamples < 120 ? 0.6 : 0.08);
+      this.last = s; this.buf.push(s); this.samples++; this._runSamples++; this.samplesSinceHop++;
+      if (this._runSamples === 1) this.on('ready');
+      if (this.buf.length > 4000) this.buf.splice(0, this.buf.length - 4000);
+      if (this._runSamples % 30 === 0) { const m = median(this.buf.slice(-120).map(x => x.dt)); if (m > 0) this.fs = 1 / m; }
+      if (this.pendingTap) this.checkTap(s);
+      if (this.hapticTrack) this.trackHaptic(s);
+      if (this.fs) {
+        const W = Math.round(WINDOW_S * this.fs);
+        if (this.buf.length >= W && this.samplesSinceHop >= Math.round(E.DELTA * this.fs) && t - this.t0 / 1000 >= 3) { this.samplesSinceHop = 0; this.processWindow(W); }
+      }
+      if (this._runSamples % 6 === 0) this.on('sample', s);
+    }
+    processWindow(W) {
+      const win = this.buf.slice(-W);
+      const f = features(win, this.fs);
+      const g = gating(win, this.fs, f, { noGyro: this.noGyro, haptic: win[0].t <= this.hapticUntil });
+      const w = { t: (performance.now() - this.t0) / 1000, q: g.q, reasons: g.reasons, f, lraw: null, l: null, dM: null, mode: this.mode, label: this.sessionLabel, boundary: this.skipWindows > 0 };
+      if (this.template) { const r = this.llr(f.vec); w.lraw = r.l; w.dM = r.dM; w.l = Number.isFinite(r.l) ? Math.min(CLIP_UP, r.l) / this.V : NaN; }
+      const usable = g.q && this.skipWindows === 0;
+      if (this.skipWindows > 0) this.skipWindows--;
+      if (this.mode === 'enroll-owner') {
+        if (usable) { this.enroll.owner.push(f.vec); if (this.enroll.owner.length >= ENROLL_WINDOWS) { this.template = fitTemplate(this.enroll.owner); this.mode = 'monitor'; this.session = E.newSession(); this.lseries = []; this.on('enrolled', 'owner'); } }
+      } else if (this.mode === 'enroll-other') {
+        if (usable) { this.enroll.other.push(f.vec); if (this.enroll.other.length >= ENROLL_WINDOWS) { this.cohort = fitTemplate(this.enroll.other); this.mode = 'monitor'; this.on('enrolled', 'other'); } }
+        this.session = E.stepSession(this.session, this.p, { l: 0, y: 0 }, 0);   // §22(a): S decai e φ acumula prior; janela abstida
+        w.session = this.session;
+      } else if (this.mode === 'monitor' && this.template) {
+        if (g.q && this.sessionLabel === 'owner' && Number.isFinite(w.l)) { this.lseries.push(w.l); if (this.lseries.length > 90) this.lseries.shift(); }
+        this.session = E.stepSession(this.session, this.p, { l: w.l ?? 0, y: w.lraw ?? 0 }, g.q);
+        w.session = this.session;
+      }
+      this.windows.push(w); if (this.windows.length > 900) this.windows.shift();
+      this.on('window', w);
+    }
+    // LLR gaussiano diagonal: f_G = template do titular; f_I = coorte medida (se houver) ou prior declarado
+    llr(x) {
+      const T = this.template, I = this.cohort; let l = 0, d2 = 0;
+      for (let j = 0; j < FEAT.length; j++) {
+        if (FEAT[j].tremor && !this.useTremor) continue;
+        const mu = T.mu[j], su = T.sd[j], mi = I ? I.mu[j] : FEAT[j].prior[0], si = I ? I.sd[j] : FEAT[j].prior[1];
+        const zu = (x[j] - mu) / su, zi = (x[j] - mi) / si;
+        l += Math.log(si / su) - 0.5 * zu * zu + 0.5 * zi * zi; d2 += zu * zu;
+      }
+      return { l, dM: Math.sqrt(d2) };
+    }
+    dprimeEffective() {
+      const T = this.template; if (!T) return null; const I = this.cohort; let s = 0; const per = [];
+      for (let j = 0; j < FEAT.length; j++) {
+        if (FEAT[j].tremor && !this.useTremor) { per.push(0); continue; }
+        const mi = I ? I.mu[j] : FEAT[j].prior[0], si = I ? I.sd[j] : FEAT[j].prior[1];
+        const d = (T.mu[j] - mi) ** 2 / (0.5 * (T.sd[j] ** 2 + si ** 2)); per.push(Math.sqrt(d)); s += d;
+      }
+      return { total: Math.sqrt(s), per };
+    }
+    state3d() { const s = this.last; if (!s) return null; return { q: this.q, omega: [s.gx, s.gy, s.gz], alin: [s.lx, s.ly, s.lz], ghat: [s.hx, s.hy, s.hz] }; }
+    rhoHat() { return this.lseries.length >= 12 ? E.lag1Autocorr(this.lseries) : null; }   // só janelas pontuadas, cortadas, com o dono
+    beginEnroll(role) {
+      this.skipWindows = 2;                       // as 2 primeiras janelas após a troca de rótulo ainda contêm dados do portador anterior
+      if (role === 'other') { this.mode = 'enroll-other'; this.enroll.other = []; this.cohort = null; this.setLabel('other'); }
+      else { this.mode = 'enroll-owner'; this.enroll.owner = []; this.template = null; this.cohort = null; this.setLabel('owner'); }
+    }
+    setLabel(l) { if (l !== this.sessionLabel) { this.sessionLabel = l; this.labelChangedAt = this.windows.length; this.skipWindows = Math.max(this.skipWindows, 2); } }
+    resolveStepUp(approved) { this.session = E.resolveStepUp(this.session, approved); }
+    strongFactor() { this.session = E.strongFactor(this.session); }
+    // H9: coerência toque–inércia — janela simétrica [t−60 ms, t+150 ms], linha de base passa-altas (diferenças), limiar limitado
+    onTouch() {
+      this.touches++; if (!this.last || !this.fs) return;
+      const n1s = Math.round(this.fs), tail = this.buf.slice(-n1s - 1).map(s => Math.hypot(s.lx, s.ly, s.lz));
+      const diffs = []; for (let i = 1; i < tail.length; i++) diffs.push(tail[i] - tail[i - 1]);
+      const sigmaHp = Math.sqrt(variance(diffs) / 2) || 0;
+      const pre = this.buf.slice(-Math.max(1, Math.round(0.06 * this.fs)) - 1);
+      let peak = 0; for (let i = 1; i < pre.length; i++) peak = Math.max(peak, Math.abs(Math.hypot(pre[i].lx, pre[i].ly, pre[i].lz) - Math.hypot(pre[i - 1].lx, pre[i - 1].ly, pre[i - 1].lz)));
+      this.pendingTap = { t: this.last.t, peak, prevMag: Math.hypot(this.last.lx, this.last.ly, this.last.lz), thr: Math.min(1.0, Math.max(0.15, 4 * sigmaHp)) };
+    }
+    checkTap(s) {
+      const tp = this.pendingTap, mag = Math.hypot(s.lx, s.ly, s.lz);
+      if (s.t - tp.t <= 0.15) { tp.peak = Math.max(tp.peak, Math.abs(mag - tp.prevMag)); tp.prevMag = mag; return; }
+      const coherent = tp.peak > tp.thr;
+      if (coherent) this.h9.coh++; else this.h9.inc++;
+      this.h9.last = { coherent, peak: tp.peak, thr: tp.thr };
+      this.pendingTap = null; this.on('tap', this.h9.last);
+    }
+    // Sonda háptica: só o envelope do pulso é observável com f_s ≈ 60 Hz (C10, §5.1); a janela que contém o pulso é abstida (critério temporal, ancilar)
+    hapticPulse(ms = 46) {
+      if (typeof navigator === 'undefined' || !navigator.vibrate) return false;
+      const ok = navigator.vibrate(ms); if (!ok) return false;
+      const t = this.last ? this.last.t : performance.now() / 1000;
+      const base = this.buf.slice(-Math.round(this.fs || 60)).map(s => Math.hypot(s.lx, s.ly, s.lz));
+      this.hapticTrack = { t, env: [], base: rms(base) }; this.hapticUntil = t + 0.4; return true;
+    }
+    trackHaptic(s) {
+      const h = this.hapticTrack, mag = Math.hypot(s.lx, s.ly, s.lz);
+      if (s.t - h.t <= 0.4) { h.env.push({ dt: s.t - h.t, mag }); return; }
+      const peak = Math.max(0, ...h.env.map(e => e.mag));
+      this.haptic = { peak, base: h.base, responded: peak > 3 * h.base + 0.05, n: h.env.length, fs: this.fs }; this.hapticTrack = null; this.on('haptic', this.haptic);
+    }
+    csv() {
+      const head = ['t_s', 'modo', 'rotulo', 'fronteira', 'q', 'motivos', ...FEAT.map(f => f.k), 'tilt_deg', 'llr_bruto', 'llr_usado', 'Lambda', 'C', 'phi', 'S', 'r'];
+      const num = v => (v == null || !Number.isFinite(v)) ? '' : String(v);
+      const rows = this.windows.map(w => [w.t.toFixed(2), w.mode, w.label, w.boundary ? 1 : 0, w.q, '"' + w.reasons.join('; ').replace(/"/g, '""') + '"', ...w.f.vec.map(v => v.toFixed(5)), w.f.tilt.toFixed(1),
+        num(w.lraw == null ? null : +w.lraw.toFixed(4)), num(w.l == null ? null : +w.l.toFixed(4)),
+        w.session ? w.session.Lambda.toFixed(4) : '', w.session ? w.session.C.toFixed(4) : '', w.session ? w.session.phi.toExponential(4) : '', w.session ? w.session.S.toFixed(4) : '', w.session ? w.session.r : '']);
+      return '\ufeff' + [head.join(','), ...rows.map(r => r.join(','))].join('\n');
+    }
+    saveTemplate() { if (!this.template) return false; try { localStorage.setItem('imu_template', JSON.stringify({ template: this.template, cohort: this.cohort })); return true; } catch { return false; } }
+    loadTemplate() {
+      try {
+        const j = JSON.parse(localStorage.getItem('imu_template') || 'null');
+        if (!j || !validTemplate(j.template)) return false;
+        this.template = j.template; this.cohort = validTemplate(j.cohort) ? j.cohort : null; this.mode = 'monitor'; this.session = E.newSession(); return true;
+      } catch { return false; }
+    }
+  }
+  return { Lab, FEAT, features, gating, fitTemplate, validTemplate, ENROLL_WINDOWS, CLIP_UP };
+})();
+
+</script>
+<script>
+/* ============================================================ RECORDER ============================================================
+   Gravação bruta do DeviceMotion para coleta de campo (protocolo §23).
+   - Valores gravados exatamente como o navegador entrega (sem inverter sinal, sem filtro).
+   - Rótulos, posturas e marcadores são eventos com tempo; nunca alimentam q_k (C6).
+   - Persistência em IndexedDB em blocos a cada ~2 s; sem IndexedDB, cai para memória.
+   Sem DOM: a interface fica em ui.js. */
+'use strict';
+const Recorder = (() => {
+  const VERSION = 1;
+  const COLS = ['t_s', 'event_ts_ms', 'interval_ms', 'acc_g_x', 'acc_g_y', 'acc_g_z', 'acc_x', 'acc_y', 'acc_z', 'rot_alpha', 'rot_beta', 'rot_gamma'];
+  const NC = COLS.length;
+  const CHUNK = 256;                 // amostras por bloco
+  const FLUSH_MS = 2000;
+  const GAP_S = 0.5;                 // Δt acima disto vira evento de lacuna
+  const DB_NAME = 'imu_collect', DB_VER = 1;
+
+  const num = v => (v == null || !Number.isFinite(+v)) ? NaN : +v;
+  const pad = (n, w) => String(n).padStart(w, '0');
+  const safeName = s => String(s || '').normalize('NFKD').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40) || 'anon';
+
+  /* ---------- armazenamento (IndexedDB com reserva em memória) ---------- */
+  function idbReq(r) { return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+  function openDB() {
+    return new Promise(resolve => {
+      try {
+        if (typeof indexedDB === 'undefined') return resolve(null);
+        const r = indexedDB.open(DB_NAME, DB_VER);
+        r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('recs')) db.createObjectStore('recs', { keyPath: 'id' }); if (!db.objectStoreNames.contains('chunks')) db.createObjectStore('chunks', { keyPath: 'key' }); };
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => resolve(null);
+        r.onblocked = () => resolve(null);
+      } catch { resolve(null); }
+    });
+  }
+  class Store {
+    constructor() { this.db = null; this.mem = { recs: new Map(), chunks: new Map() }; this.ready = this.init(); }
+    async init() { this.db = await openDB(); return this; }
+    get persistent() { return !!this.db; }
+    /* leitura: depois da degradação, reabre o IndexedDB só para ler o que já foi salvo antes da falha */
+    async readDb() {
+      if (this.db) return this.db;
+      if (!this.degraded) return null;
+      if (!this.rdb) this.rdb = await openDB();
+      return this.rdb;
+    }
+    async tx(store, mode, fn, db) {
+      db = db || this.db;
+      if (!db) return fn(null);
+      const t = db.transaction(store, mode), os = t.objectStore(store);
+      const done = new Promise((res, rej) => { t.oncomplete = res; t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('transação abortada')); });
+      const out = await fn(os);
+      await done;
+      return out;
+    }
+    /* conexão perdida (iOS em segundo plano) ou cota: reabre; após 3 falhas seguidas passa a gravar em memória */
+    async recover(fails) {
+      try { if (this.db) this.db.close(); } catch {}
+      this.db = fails >= 3 ? null : await openDB();
+      if (!this.db) this.degraded = true;
+      return !!this.db;
+    }
+    async putMeta(meta) {
+      const m = JSON.parse(JSON.stringify(meta));
+      if (!this.db) { this.mem.recs.set(m.id, m); return; }
+      await this.tx('recs', 'readwrite', os => { os.put(m); });
+    }
+    async putChunk(id, seq, n, data) {
+      const key = `${id}:${pad(seq, 6)}`;
+      if (!this.db) { this.mem.chunks.set(key, { key, n, data }); return; }
+      await this.tx('chunks', 'readwrite', os => { os.put({ key, rec: id, seq, n, data }); });
+    }
+    async list() {
+      const byId = new Map();
+      const db = await this.readDb();
+      if (db) { try { for (const m of await this.tx('recs', 'readonly', os => idbReq(os.getAll()), db)) byId.set(m.id, m); } catch (e) { if (!this.mem.recs.size) throw e; } }
+      for (const m of this.mem.recs.values()) byId.set(m.id, m);     // a cópia em memória é a mais recente quando houve degradação
+      return [...byId.values()].sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+    }
+    async getMeta(id) {
+      if (this.mem.recs.has(id)) return this.mem.recs.get(id);
+      const db = await this.readDb(); if (!db) return null;
+      return this.tx('recs', 'readonly', os => idbReq(os.get(id)), db);
+    }
+    async samples(id) {
+      const lo = id + ':', hi = id + ':\uffff', byKey = new Map();
+      const db = await this.readDb();
+      if (db) { try { for (const c of await this.tx('chunks', 'readonly', os => idbReq(os.getAll(IDBKeyRange.bound(lo, hi))), db)) byKey.set(c.key, c); } catch (e) { if (!this.mem.chunks.size) throw e; } }
+      for (const c of this.mem.chunks.values()) if (c.key >= lo && c.key <= hi) byKey.set(c.key, c);
+      const chunks = [...byKey.values()].sort((a, b) => a.key.localeCompare(b.key));
+      const total = chunks.reduce((s, c) => s + c.n, 0), out = new Float64Array(total * NC);
+      let o = 0; for (const c of chunks) { out.set(c.data.subarray ? c.data.subarray(0, c.n * NC) : c.data.slice(0, c.n * NC), o); o += c.n * NC; }
+      return { n: total, data: out };
+    }
+    async remove(id) {
+      const lo = id + ':', hi = id + ':\uffff';
+      this.mem.recs.delete(id); for (const k of [...this.mem.chunks.keys()]) if (k >= lo && k <= hi) this.mem.chunks.delete(k);
+      const db = await this.readDb(); if (!db) return;
+      await this.tx('chunks', 'readwrite', os => { os.delete(IDBKeyRange.bound(lo, hi)); }, db);
+      await this.tx('recs', 'readwrite', os => { os.delete(id); }, db);
+    }
+    /* gravações que ficaram em "gravando" após recarregar a página: marca como interrompidas */
+    async recoverInterrupted(activeId) {
+      const list = await this.list(); let k = 0;
+      for (const m of list) if (m.status === 'recording' && m.id !== activeId) { m.status = 'interrupted'; m.events = (m.events || []).concat([{ t: m.duration || 0, type: 'note', value: 'página recarregada ou fechada durante a gravação' }]); await this.putMeta(m); k++; }
+      return k;
+    }
+  }
+
+  /* ---------- sessão de gravação ---------- */
+  class Recording {
+    constructor(store, meta) {
+      this.store = store;
+      const now = new Date();
+      this.meta = {
+        id: 'rec_' + now.getTime().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+        version: VERSION, startedAt: now.toISOString(), endedAt: null, status: 'recording',
+        n: 0, saved: 0, duration: 0, fs: null, gaps: 0, chunks: 0, columns: COLS, events: [],
+        units: { t_s: 's desde o início (performance.now)', event_ts_ms: 'ms (Event.timeStamp)', interval_ms: 'ms (DeviceMotionEvent.interval)', acc_g: 'm/s² (accelerationIncludingGravity, como entregue)', acc: 'm/s² (acceleration, sem gravidade, como entregue)', rot: '°/s (rotationRate: alpha≈z, beta≈x, gamma≈y)' },
+        ...meta,
+      };
+      this.t0 = null; this.lastT = null; this.buf = new Float64Array(CHUNK * NC); this.k = 0; this.seq = 0;
+      this.dts = []; this.pending = Promise.resolve(); this.error = null; this.fails = 0; this.queue = [];
+      this.timer = setInterval(() => this.flush(), FLUSH_MS);
+    }
+    get id() { return this.meta.id; }
+    push(ev) {
+      if (this.meta.status !== 'recording') return;
+      const tp = performance.now() / 1000;
+      if (this.t0 == null) this.t0 = tp;
+      const t = tp - this.t0;
+      if (this.lastT != null) {
+        const dt = t - this.lastT;
+        if (dt > GAP_S) { this.meta.gaps++; this.meta.events.push({ t: +this.lastT.toFixed(3), type: 'gap', value: `${dt.toFixed(2)} s sem amostras` }); }
+        else if (dt > 0) { this.dts.push(dt); if (this.dts.length > 240) this.dts.shift(); }
+      }
+      this.lastT = t;
+      const ag = ev.accelerationIncludingGravity || {}, a = ev.acceleration || {}, r = ev.rotationRate || {};
+      const o = this.k * NC, b = this.buf;
+      b[o] = t; b[o + 1] = num(ev.timeStamp); b[o + 2] = num(ev.interval);
+      b[o + 3] = num(ag.x); b[o + 4] = num(ag.y); b[o + 5] = num(ag.z);
+      b[o + 6] = num(a.x); b[o + 7] = num(a.y); b[o + 8] = num(a.z);
+      b[o + 9] = num(r.alpha); b[o + 10] = num(r.beta); b[o + 11] = num(r.gamma);
+      this.k++; this.meta.n++; this.meta.duration = t;
+      if (this.k >= CHUNK) this.flush();
+    }
+    get fs() { if (this.dts.length < 10) return null; const s = [...this.dts].sort((x, y) => x - y), m = s[s.length >> 1]; return m > 0 ? 1 / m : null; }
+    event(type, value) {
+      const t = this.t0 == null ? 0 : performance.now() / 1000 - this.t0;
+      const e = { t: +t.toFixed(3), type, value: value == null ? '' : String(value).slice(0, 200) };
+      this.meta.events.push(e); return e;
+    }
+    /* blocos com falha ficam na fila e são regravados no próximo flush; nada é descartado */
+    flush() {
+      const n = this.k;
+      if (n) { this.queue.push({ seq: this.seq++, n, data: this.buf.slice(0, n * NC) }); this.k = 0; this.meta.chunks = this.seq; }
+      this.meta.fs = this.fs;
+      this.pending = this.pending.then(() => this.drain());
+      return this.pending;
+    }
+    async drain() {
+      try {
+        while (this.queue.length) { const c = this.queue[0]; await this.store.putChunk(this.meta.id, c.seq, c.n, c.data); this.queue.shift(); this.meta.saved += c.n; }
+        await this.store.putMeta({ ...this.meta, events: this.meta.events.slice() });
+        this.error = null; this.fails = 0;
+      } catch (e) {
+        this.error = e; this.fails++;
+        try { await this.store.recover(this.fails); } catch {}
+      }
+    }
+    get unsaved() { return this.queue.reduce((t, c) => t + c.n, 0) + this.k; }
+    async finish(status) {
+      if (this.meta.status !== 'recording') return this.meta;
+      clearInterval(this.timer);
+      this.event('stop', status === 'stopped' ? 'parada pelo usuário' : status);
+      this.meta.status = status === 'stopped' ? 'done' : 'interrupted';
+      this.meta.endedAt = new Date().toISOString();
+      for (let i = 0; i < 4; i++) { await this.flush(); if (!this.error && !this.queue.length) break; }
+      if (this.error || this.queue.length) throw this.error || new Error('blocos não salvos');
+      return this.meta;
+    }
+  }
+
+  /* ---------- exportação ---------- */
+  // rótulos por amostra derivados dos eventos (holder/posture valem do instante do evento em diante)
+  function stateAt(events) {
+    const ev = (events || []).filter(e => e.type === 'holder' || e.type === 'posture').sort((a, b) => a.t - b.t);
+    return t => { let h = '', p = ''; for (const e of ev) { if (e.t > t) break; if (e.type === 'holder') h = e.value; else p = e.value; } return [h, p]; };
+  }
+  function toCSV(meta, s) {
+    const head = COLS.concat(['holder', 'posture']);
+    const fmt = (v, d) => Number.isFinite(v) ? v.toFixed(d) : '';
+    const DEC = [4, 3, 3, 5, 5, 5, 5, 5, 5, 4, 4, 4];
+    const ev = (meta.events || []).filter(e => e.type === 'holder' || e.type === 'posture').sort((a, b) => a.t - b.t);
+    let ei = 0, h = '', p = '';
+    const lines = ['\ufeff' + head.join(',')];
+    for (let i = 0; i < s.n; i++) {
+      const o = i * NC, t = s.data[o];
+      while (ei < ev.length && ev[ei].t <= t) { if (ev[ei].type === 'holder') h = ev[ei].value; else p = ev[ei].value; ei++; }
+      const row = new Array(NC + 2);
+      for (let j = 0; j < NC; j++) row[j] = fmt(s.data[o + j], DEC[j]);
+      row[NC] = h; row[NC + 1] = p;
+      lines.push(row.join(','));
+    }
+    return lines.join('\n');
+  }
+  function eventsCSV(meta) {
+    const q = v => { let x = String(v); if (/^[=+\-@\t\r]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };   // neutraliza fórmulas no Excel/Numbers
+    return '\ufeff' + ['t_s,type,value', ...(meta.events || []).map(e => `${e.t},${e.type},${q(e.value)}`)].join('\n');
+  }
+  function toJSON(meta, s) {
+    const cols = {};
+    COLS.forEach((c, j) => { const a = new Array(s.n); for (let i = 0; i < s.n; i++) { const v = s.data[i * NC + j]; a[i] = Number.isFinite(v) ? +v.toFixed(6) : null; } cols[c] = a; });
+    const at = stateAt(meta.events), hs = new Array(s.n), ps = new Array(s.n);
+    for (let i = 0; i < s.n; i++) { const hp = at(s.data[i * NC]); hs[i] = hp[0]; ps[i] = hp[1]; }
+    cols.holder = hs; cols.posture = ps;
+    return JSON.stringify({ meta, columns: cols });
+  }
+  function baseName(meta) {
+    const d = new Date(meta.startedAt), st = `${d.getFullYear()}${pad(d.getMonth() + 1, 2)}${pad(d.getDate(), 2)}-${pad(d.getHours(), 2)}${pad(d.getMinutes(), 2)}${pad(d.getSeconds(), 2)}`;
+    return `imu_${safeName(meta.participant)}_${st}`;
+  }
+
+  return { Store, Recording, toCSV, toJSON, eventsCSV, baseName, stateAt, COLS, NC, CHUNK, GAP_S, VERSION };
+})();
+
+</script>
+<script>
+/* ============================================================ UI ============================================================ */
+'use strict';
+(() => {
+  const E = AuthEngine;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const ACTIONS = [{ L: 50, name: 'Pix R$ 50' }, { L: 5000, name: 'Pix R$ 5.000' }, { L: 50000, name: 'TED R$ 50.000' }];
+  const f1 = x => (Math.round(x * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const f2 = x => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sci = x => E.fmtSci(x).replace('.', ',').replace(/×10\^(-?\d+)/, (m, e) => '×10' + sup(e));
+  const sup = s => String(s).replace(/-/g, '⁻').replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  const pt = s => String(s).replace(/(\d)\.(\d)/g, '$1,$2');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  /* ---------- tema ---------- */
+  function setTheme(mode) {
+    if (mode === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = mode;
+    $$('#theme button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+    try { localStorage.setItem('painel_theme', mode); } catch {}
+    requestAnimationFrame(redrawAll);
+  }
+  $$('#theme button').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.mode)));
+  let savedTheme = 'auto'; try { savedTheme = localStorage.getItem('painel_theme') || 'auto'; } catch {}
+  setTheme(['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto');
+  try { const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)'); const mh = () => requestAnimationFrame(redrawAll); if (mq) { if (mq.addEventListener) mq.addEventListener('change', mh); else if (mq.addListener) mq.addListener(mh); } } catch {}
+
+  /* ---------- abas ---------- */
+  let currentTab = 'collect';
+  const TABS = ['collect', 'sensor', 'live', 'tests', 'docs'];
+  $$('nav.tabs button').forEach((b, i) => { b.id = 'tab-btn-' + b.dataset.tab; b.setAttribute('aria-controls', 'tab-' + b.dataset.tab); b.tabIndex = i === 0 ? 0 : -1; $('#tab-' + b.dataset.tab).setAttribute('aria-labelledby', b.id); b.addEventListener('click', () => showTab(b.dataset.tab)); });
+  $('nav.tabs').addEventListener('keydown', e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const i = TABS.indexOf(currentTab), j = (i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length; showTab(TABS[j]); $('#tab-btn-' + TABS[j]).focus(); });
+  function showTab(id) {
+    if (!TABS.includes(id)) id = 'collect';
+    currentTab = id;
+    $$('nav.tabs button').forEach(b => { const on = b.dataset.tab === id; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+    $$('.tabpanel').forEach(p => { p.hidden = p.id !== 'tab-' + id; });
+    try { localStorage.setItem('painel_tab', id); } catch {}
+    requestAnimationFrame(redrawAll);
+  }
+
+  /* ---------- gráficos (canvas, sem dependências) ---------- */
+  function chart(cv, cfg) {
+    if (!cv || cv.offsetParent === null) return;
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    const muted = cssVar('--muted'), line = cssVar('--line'), fg = cssVar('--fg');
+    const padL = 46, padR = 8, padT = 8, padB = 18, n = Math.max(2, cfg.n);
+    let lo = Infinity, hi = -Infinity;
+    for (const s of cfg.series) for (const v of s.data) if (Number.isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    for (const l of cfg.hlines || []) { lo = Math.min(lo, l.y); hi = Math.max(hi, l.y); }
+    if (cfg.yMin != null) lo = Math.min(lo, cfg.yMin); if (cfg.yMax != null) hi = Math.max(hi, cfg.yMax);
+    if (!Number.isFinite(lo)) { lo = 0; hi = 1; } if (hi - lo < 1e-9) hi = lo + 1;
+    const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+    if (cfg.yMin != null && cfg.hardMin) lo = cfg.yMin; if (cfg.yMax != null && cfg.hardMax) hi = cfg.yMax;
+    const X = i => padL + (i / (n - 1)) * (w - padL - padR), Y = v => padT + (1 - (v - lo) / (hi - lo)) * (h - padT - padB);
+    ctx.font = '10px ' + cssVar('--mono'); ctx.textBaseline = 'middle';
+    const ticks = 4; ctx.strokeStyle = line; ctx.fillStyle = muted; ctx.lineWidth = 1;
+    for (let i = 0; i <= ticks; i++) { const v = lo + (hi - lo) * i / ticks, y = Y(v); ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke(); ctx.textAlign = 'right'; ctx.fillText(cfg.fmt ? cfg.fmt(v) : v.toFixed(Math.abs(hi - lo) < 5 ? 1 : 0), padL - 4, y); }
+    if (lo < 0 && hi > 0) { ctx.strokeStyle = muted; ctx.beginPath(); ctx.moveTo(padL, Y(0)); ctx.lineTo(w - padR, Y(0)); ctx.stroke(); }
+    for (const l of cfg.hlines || []) { ctx.strokeStyle = l.color; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(padL, Y(l.y)); ctx.lineTo(w - padR, Y(l.y)); ctx.stroke(); ctx.setLineDash([]); if (l.label) { ctx.fillStyle = l.color; ctx.textAlign = 'right'; ctx.fillText(l.label, w - padR - 2, Math.max(padT + 9, Y(l.y) - 6)); } }
+    for (const s of cfg.series) {
+      if (s.type === 'bar') { const bw = Math.max(1, (w - padL - padR) / n * 0.7); for (let i = 0; i < s.data.length; i++) { const v = s.data[i]; if (v == null) continue; if (!Number.isFinite(v)) { if (s.missing) { ctx.fillStyle = s.missing; ctx.fillRect(X(i) - bw / 2, padT, bw, h - padT - padB); } continue; } ctx.fillStyle = typeof s.color === 'function' ? s.color(v, i) : s.color; const y0 = Y(0), y1 = Y(v); ctx.fillRect(X(i) - bw / 2, Math.min(y0, y1), bw, Math.max(1, Math.abs(y1 - y0))); } }
+      else { ctx.strokeStyle = s.color; ctx.lineWidth = s.width || 1.8; ctx.beginPath(); let pen = false; for (let i = 0; i < s.data.length; i++) { const v = s.data[i]; if (v == null || !Number.isFinite(v)) { pen = false; continue; } if (!pen) { ctx.moveTo(X(i), Y(v)); pen = true; } else ctx.lineTo(X(i), Y(v)); } ctx.stroke(); }
+    }
+    ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    if (cfg.xLabels) cfg.xLabels.forEach(([i, t]) => { ctx.textAlign = i === 0 ? 'left' : i >= n - 1 ? 'right' : 'center'; ctx.fillText(t, X(i), h - 5); });
+    if (cfg.title) { ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText(cfg.title, padL + 4, padT + 8); }
+  }
+
+  /* ---------- componentes compartilhados (sessão: métricas, ações, step-up) ---------- */
+  function metricHTML(k, v, d, barPct, barCls) {
+    return `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div>${barPct != null ? `<div class="bar ${barCls || ''}"><i style="width:${Math.max(0, Math.min(100, barPct)).toFixed(0)}%"></i></div>` : ''}<div class="d">${d}</div></div>`;
+  }
+  function renderMetrics(el, s, p) {
+    const lnBr = E.lnB(s.r), budget = 100 * s.alphaSpent / E.ALPHA_SESS;
+    el.innerHTML =
+      metricHTML('<span class="sym">Λ</span> · SPRT', f2(s.Lambda) + ' nats', `renova em ln B<sub>${s.r}</sub> = ${f1(lnBr)} · step-up se Λ ≤ ln A = ${f1(E.lnA(s.r))}`, 100 * s.Lambda / lnBr, s.Lambda < 0 ? 'warn' : '') +
+      metricHTML('C · CUSUM', f2(s.C), `alarme se C &gt; h = ${pt(p.h)} · ν = ${pt(p.nu)}`, 100 * s.C / p.h, s.C > 0.7 * p.h ? 'bad' : s.C > 0.4 * p.h ? 'warn' : '') +
+      metricHTML('<span class="sym">φ</span> · Shiryaev', sci(s.phi), `razão de chances de troca já ter ocorrido · ϖ = ${sci(p.varpi)}`, s.phi > 0 ? 100 * (Math.log10(s.phi) + 8) / 8 : 0, s.phi > E.phiThreshold(p, 50000) ? 'bad' : '') +
+      metricHTML('S · score', f2(s.S), `regra de interface (reage a abstenção prolongada); step-up se S &lt; ${pt(p.Smin)}`, 100 * s.S, s.S < p.Smin ? 'bad' : '') +
+      metricHTML('renovações r', String(s.r - 1), `orçamento α gasto: ${pt(budget.toFixed(1))} % de 10⁻⁶ · próxima α<sub>r</sub> = ${sci(E.alphaR(s.r))}`, budget, '') +
+      metricHTML('janelas', `${s.counters.windows} <small style="font-size:.7em">(${s.counters.abstained} abstidas)</small>`, `q̄ = ${s.counters.windows ? (100 * (1 - s.counters.abstained / s.counters.windows)).toFixed(0) : 100} % · ${s.counters.alarms} alarmes CUSUM · ${s.counters.sprtStepUps || 0} SPRT · ${s.counters.stepUps} step-ups`, null);
+  }
+  function buildActions(el, onExec) {
+    el.innerHTML = ACTIONS.map((a, i) => `<div class="action" data-i="${i}"><div class="t"><span>${a.name}</span><span class="badge ok tag">—</span></div><div class="why"></div><div class="small muted fw"></div>${onExec ? `<button class="btn sm" data-i="${i}">Executar</button>` : ''}</div>`).join('');
+    if (onExec) $$('button[data-i]', el).forEach(b => b.addEventListener('click', () => onExec(ACTIONS[+b.dataset.i])));
+  }
+  function renderActions(el, s, p) {
+    if (!el.children.length) buildActions(el, null);
+    ACTIONS.forEach((a, i) => {
+      const d = E.decideAction(s, p, a.L), card = el.children[i];
+      card.className = 'action ' + (d.ok ? 'ok' : 'no');
+      const tag = $('.tag', card); tag.className = 'badge tag ' + (d.ok ? 'ok' : 'warn'); tag.textContent = d.ok ? 'executa' : 'step-up';
+      $('.why', card).textContent = pt(d.why);
+      $('.fw', card).textContent = `Janela fixa (B): Λ₁₅ = ${f2(d.lamM)} vs Λ* = ${f2(d.lamStar)} → ${d.fixedWindowStepUp ? 'pediria step-up' : 'executaria'}.`;
+      const b = $('button', card); if (b) { b.className = 'btn sm ' + (d.ok ? 'primary' : ''); b.textContent = d.ok ? 'Executar' : 'Tentar executar'; b.disabled = s.revoked; }
+    });
+  }
+  const STEPUP_WHY = { cusum: 'alarme do CUSUM (C > h)', score: 'score de sessão abaixo de S_min', sprt: 'SPRT abaixo de ln A (β = 1 % por renovação)' };
+  const REVOKE_WHY = { stepup: 'Quem segurava o aparelho falhou no fator forte.', action: 'Step-up na ação de valor reprovado.', sprt: 'SPRT cruzou ln A.' };
+  function renderStepUp(el, s, holderIsOwner, onResolve) {
+    const key = `${s.revoked}|${s.revokedBy}|${s.stepUpPending}|${holderIsOwner}`;
+    if (el.dataset.key === key) return; el.dataset.key = key;
+    if (!s.stepUpPending && !s.revoked) { el.hidden = true; return; }
+    el.hidden = false;
+    if (s.revoked) { el.className = 'note bad'; el.innerHTML = `<b>Sessão revogada.</b> ${esc(REVOKE_WHY[s.revokedBy] || '')} ${holderIsOwner ? 'O dono precisa de um novo fator forte.' : 'Perda evitada.'} Use “Fator forte aprovado” para iniciar nova sessão.`; return; }
+    el.className = 'note warn';
+    el.innerHTML = `<b>Step-up solicitado</b> por ${STEPUP_WHY[s.stepUpPending] || s.stepUpPending}. Quem segura o aparelho precisa passar no fator forte (Face ID / PIN). <button class="btn sm primary" id="${el.id}-btn">${holderIsOwner ? 'Dono responde ao step-up' : 'Impostor tenta o fator forte'}</button> <span class="small muted" id="${el.id}-cd"></span>`;
+    $('#' + el.id + '-btn').addEventListener('click', () => onResolve(holderIsOwner));
+  }
+
+  /* ============================================================ CENAS 3D ============================================================ */
+  function wireScene(pfx) {
+    const scene = View3D.makeScene($('#' + pfx + '-3d'));
+    $$('#' + pfx + '-3d-view button').forEach(b => b.addEventListener('click', () => { scene.preset(b.dataset.v); $$('#' + pfx + '-3d-view button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    $$('#' + pfx + '-3d').forEach(() => {});
+    $$(`#tab-${pfx === 'lv' ? 'live' : 'sensor'} input[data-l]`).forEach(i => i.addEventListener('change', () => scene.toggle(i.dataset.l, i.checked)));
+    return scene;
+  }
+  const sceneLive = wireScene('lv'), sceneSn = wireScene('sn'), kin = View3D.makeKinematics();
+  let lastFrame = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - lastFrame) / 1000); lastFrame = now;
+    if (currentTab === 'live' && !document.hidden) {
+      kin.set(live.s.revoked ? 'table' : live.s.holder);
+      const st = kin.step(live.paused ? 0 : dt);
+      st.caption = live.s.revoked ? 'sessão revogada · aparelho parado' : (live.s.holder === 'impostor' ? 'outra pessoa segura (verdade da simulação)' : 'dono segura');
+      sceneLive.render(st);
+    } else if (currentTab === 'sensor' && !document.hidden) {
+      const st = lab.state3d();
+      if (st) { st.caption = lab.running ? `IMU real · f_s ${lab.fs ? lab.fs.toFixed(0) : '—'} Hz` : 'sensores parados'; sceneSn.render(st); }
+      else sceneSn.render({ q: View3D.qFromEuler(0.6, 0, 0), ghat: [0, Math.sin(0.6), Math.cos(0.6)], caption: 'aguardando sensores (pose ilustrativa)' });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ============================================================ AO VIVO ============================================================ */
+  const live = { p: E.defaults(), s: E.newSession(), rng: null, src: null, gate: null, speed: 1, paused: false, timer: null, hist: [], log: [], outcomes: { loss: 0, avoided: 0, friction: 0, revoked: 0 }, pendingSince: null };
+  const STEPUP_GRACE_MS = 6000;   // tempo real para responder ao step-up antes da resolução automática
+  const HIST = 60;
+  function liveReset() {
+    live.s = E.newSession(); live.rng = E.makeRng(20261025 + Math.floor(Math.random() * 1e6)); live.src = E.makeSource(() => live.p, live.rng); live.gate = E.makeGate(() => live.p, live.rng);
+    live.hist = []; live.log = []; live.outcomes = { loss: 0, avoided: 0, friction: 0, revoked: 0 }; live.pendingSince = null; $('#lv-stepup').dataset.key = '';
+    addLog('Sessão iniciada após fator forte; dono usa o aparelho.', 'good'); liveRender();
+  }
+  function addLog(msg, cls) { live.log.unshift({ t: live.s.t, msg, cls }); if (live.log.length > 40) live.log.pop(); }
+  function liveStep() {
+    if (live.paused || live.s.revoked) return;
+    if (live.s.stepUpPending) {                                   // simulação congela até a resposta ao step-up (resolução automática após tempo real)
+      if (live.pendingSince == null) live.pendingSince = performance.now();
+      if (performance.now() - live.pendingSince >= STEPUP_GRACE_MS) liveResolveStepUp(live.s.holder === 'owner'); else liveRender();
+      return;
+    } else live.pendingSince = null;
+    const inc = live.src.next(live.s.holder);
+    const q = live.p.gateOnScore && inc.l < live.p.gateCut ? 0 : live.gate.next();   // erro C6: abster por escore (viés de seleção)
+    const before = live.s;
+    live.s = E.stepSession(live.s, live.p, inc, q);
+    for (const ev of live.s.events) {
+      if (ev === 'renew') addLog(`SPRT renovou a confiança (Λ ≥ ln B_${before.r} = ${f1(E.lnB(before.r))}); α_${before.r} = ${sci(E.alphaR(before.r))} gasta.`, 'good');
+      if (ev === 'sprt') addLog(`SPRT cruzou ln A = ${f1(E.lnA(before.r))} → step-up (§22 h; aqui exige fator forte em vez de revogar direto).`, 'warn');
+      if (ev === 'alarm') addLog(`CUSUM alarmou (C = ${f2(live.s.C)} > h) → step-up.`, 'warn');
+      if (ev === 'score') addLog('Score de sessão abaixo de S_min → step-up.', 'warn');
+    }
+    live.hist.push({ t: live.s.t, l: q ? inc.l : NaN, q, Lambda: live.s.Lambda, C: live.s.C, phi: live.s.phi, holder: live.s.holder });
+    if (live.hist.length > HIST) live.hist.shift();
+    liveRender();
+  }
+  function liveResolveStepUp(approved) {
+    if (!live.s.stepUpPending) return;
+    const why = live.s.stepUpPending; live.s = E.resolveStepUp(live.s, approved); live.pendingSince = null;
+    if (approved) { addLog(`Dono passou no step-up (${why}): C ← 0, φ ← 0${why === 'sprt' ? ', Λ ← 0' : ''} — fricção contabilizada.`, 'warn'); live.outcomes.friction++; }
+    else { addLog(`Impostor falhou no step-up (${why}): sessão revogada, perda evitada.`, 'good'); live.outcomes.avoided++; live.outcomes.revoked++; }
+    liveRender();
+  }
+  function liveExec(a) {
+    const d = E.decideAction(live.s, live.p, a.L), imp = live.s.holder === 'impostor';
+    if (d.code === 'revoked') { addLog(`${a.name}: bloqueada, sessão já revogada.`, 'warn'); liveRender(); return; }
+    if (d.ok) { if (imp) { live.outcomes.loss++; addLog(`${a.name} executada pelo IMPOSTOR: perda.`, 'bad'); } else addLog(`${a.name} executada pelo dono sem fricção.`, 'good'); }
+    else if (imp) { live.outcomes.avoided++; live.outcomes.revoked++; addLog(`${a.name}: step-up (${d.code}); impostor não passa → perda evitada; sessão revogada.`, 'good'); live.s = E.revoke(live.s, 'action'); }
+    else { live.outcomes.friction++; addLog(`${a.name}: step-up ao dono (${d.code}) — fricção.`, 'warn'); if (live.s.stepUpPending) live.s = E.resolveStepUp(live.s, true); live.pendingSince = null; }
+    liveRender();
+  }
+  function liveRender() {
+    if (currentTab !== 'live') return;
+    const s = live.s, p = live.p, imp = s.holder === 'impostor';
+    const badge = $('#lv-badge');
+    if (s.revoked) { badge.className = 'badge bad'; badge.textContent = 'Sessão revogada'; }
+    else if (s.stepUpPending) { badge.className = 'badge warn'; badge.textContent = 'Step-up pendente'; }
+    else if (s.C > 0.5 * p.h) { badge.className = 'badge warn'; badge.textContent = 'Suspeita acumulando'; }
+    else { badge.className = 'badge ok'; badge.textContent = 'Sessão íntegra'; }
+    const hb = $('#lv-holder'); hb.textContent = 'portador real: ' + (imp ? 'OUTRA PESSOA' : 'dono'); hb.className = 'badge ' + (imp ? 'bad' : 'neutral');
+    $('#lv-clock').textContent = `t = ${s.t} s · passo ${s.k}` + (s.handoffAt != null ? (imp ? ` · troca há ${s.t - s.handoffAt} s` : ' · dono retomou') : '');
+    $('#lv-handoff').disabled = imp || s.revoked; $('#lv-back').disabled = !imp || s.revoked;
+    renderMetrics($('#lv-metrics'), s, p);
+    renderActions($('#lv-actions'), s, p);
+    renderStepUp($('#lv-stepup'), s, !imp, liveResolveStepUp);
+    const cd = $('#lv-stepup-cd'); if (cd && live.pendingSince != null) cd.textContent = `resolução automática em ${Math.max(0, (STEPUP_GRACE_MS - (performance.now() - live.pendingSince)) / 1000).toFixed(0)} s`;
+    const o = live.outcomes;
+    $('#lv-outcomes').innerHTML = `<span class="badge bad">perdas: ${o.loss}</span><span class="badge ok">perdas evitadas: ${o.avoided}</span><span class="badge warn">fricção (step-ups ao dono): ${o.friction}</span><span class="badge neutral">revogações: ${o.revoked}</span>`;
+    $('#lv-log').innerHTML = live.log.map(l => `<li class="${l.cls || ''}"><time>${l.t} s</time><span>${esc(l.msg)}</span></li>`).join('');
+    liveCharts();
+  }
+  function liveCharts() {
+    const H = live.hist, n = HIST, pad = n - H.length, padArr = a => Array(pad).fill(null).concat(a);
+    const xl = [[0, '−120 s'], [Math.floor(n / 2), '−60 s'], [n - 1, 'agora']];
+    const good = cssVar('--good'), bad = cssVar('--bad'), info = cssVar('--info'), warn = cssVar('--warn'), violet = cssVar('--violet'), muted = cssVar('--muted');
+    chart($('#lv-c1'), { n, xLabels: xl, series: [{ type: 'bar', data: padArr(H.map(h => h.l)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { data: padArr(H.map(h => h.Lambda)), color: info }], hlines: [{ y: E.lnB(live.s.r), color: info, label: 'ln B_r' }], yMin: -4, yMax: 4 });
+    chart($('#lv-c2'), { n, xLabels: xl, series: [{ data: padArr(H.map(h => h.C)), color: warn }], hlines: [{ y: live.p.h, color: bad, label: 'h' }], yMin: 0, yMax: live.p.h * 1.1, hardMin: true });
+    const thr = L => Math.log10(E.phiThreshold(live.p, L));
+    chart($('#lv-c3'), { n, xLabels: xl, series: [{ data: padArr(H.map(h => h.phi > 0 ? Math.log10(h.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
+  }
+  function liveTimer() { clearInterval(live.timer); live.timer = setInterval(liveStep, Math.max(25, 2000 / live.speed)); }
+  buildActions($('#lv-actions'), liveExec);
+  $$('#lv-speed button').forEach(b => b.addEventListener('click', () => { live.speed = +b.dataset.v; $$('#lv-speed button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); liveTimer(); }));
+  $('#lv-pause').addEventListener('click', e => { live.paused = !live.paused; e.target.textContent = live.paused ? 'Continuar' : 'Pausar'; });
+  $('#lv-reset').addEventListener('click', liveReset);
+  $('#lv-handoff').addEventListener('click', () => { if (live.s.holder === 'impostor') return; live.s = E.handoff(live.s); addLog('Troca de posse: outra pessoa segura o aparelho (o sistema não é avisado).', 'bad'); liveRender(); });
+  $('#lv-back').addEventListener('click', () => { if (live.s.holder !== 'impostor') return; live.s = { ...live.s, holder: 'owner', events: [] }; addLog('Dono retoma o aparelho; a evidência acumulada contra ele permanece até ser diluída.', 'warn'); liveRender(); });
+  $('#lv-strong').addEventListener('click', () => { live.s = E.strongFactor({ ...live.s, holder: 'owner' }); addLog('Fator forte aprovado pelo dono: nova sessão (Λ, C, φ, S e orçamento de α reiniciados).', 'good'); liveRender(); });
+
+  /* controles */
+  const CONTROLS = [
+    { id: 'dp', label: 'd′ por passo de 2 s', min: 1.0, max: 2.0, step: 0.05, get: () => live.p.dp, set: v => live.p = { ...live.p, dp: v }, fmt: v => v.toFixed(2) + ` (EER/passo ${(100 * E.Phi(-v / 2)).toFixed(0)} %)` },
+    { id: 'h', label: 'limiar do CUSUM h', min: 3, max: 12, step: 0.5, get: () => live.p.h, set: v => live.p = { ...live.p, h: v }, fmt: v => v + ` (FAPH ≤ ${(3600 / (2 * Math.exp(v))).toFixed(2)})` },
+    { id: 'nu', label: 'margem ν', min: 0, max: 0.6, step: 0.05, get: () => live.p.nu, set: v => live.p = { ...live.p, nu: v }, fmt: v => v.toFixed(2) + ` (ARL₀ ≥ e^${(1 + v / (live.p.dp ** 2 / 2)).toFixed(2)}h)` },
+    { id: 'm', label: 'imitação m (fração da deriva removida)', min: 0, max: 0.9, step: 0.05, get: () => live.p.m, set: v => live.p = { ...live.p, m: v }, fmt: v => v.toFixed(2) + (v > 0 ? ` (cota ≈ α^${(1 - v).toFixed(2)})` : '') },
+    { id: 'kappa', label: 'titular “cabra” κ (evidência média perdida)', min: 0, max: 0.75, step: 0.05, get: () => live.p.kappa, set: v => live.p = { ...live.p, kappa: v }, fmt: v => v.toFixed(2) },
+    { id: 'rho', label: 'correlação entre passos ρ (AR(1))', min: 0, max: 0.6, step: 0.05, get: () => live.p.rho, set: v => live.p = { ...live.p, rho: v }, fmt: v => v.toFixed(2) + ` (V = ${((1 + v) / (1 - v)).toFixed(2)})` },
+    { id: 'abst', label: 'fração de janelas abstidas 1−q̄', min: 0, max: 0.6, step: 0.05, get: () => live.p.p10 === 0 ? 0 : live.p.p10 / (live.p.p01 + live.p.p10), set: v => { const p01 = live.p.p01; live.p = { ...live.p, p10: v <= 0 ? 0 : p01 * v / (1 - v) }; }, fmt: v => (100 * v).toFixed(0) + ' %' },
+    { id: 'p01', label: 'saída da abstenção p₀₁ (menor = rajadas longas)', min: 0.05, max: 1, step: 0.05, get: () => live.p.p01, set: v => { const a = live.p.p10 === 0 ? 0 : live.p.p10 / (live.p.p01 + live.p.p10); live.p = { ...live.p, p01: v, p10: a <= 0 ? 0 : v * a / (1 - a) }; }, fmt: v => v.toFixed(2) },
+    { id: 'Smin', label: 'S_min do score de interface', min: 0.1, max: 0.9, step: 0.05, get: () => live.p.Smin, set: v => live.p = { ...live.p, Smin: v }, fmt: v => v.toFixed(2) },
+  ];
+  function buildControls() {
+    const el = $('#lv-controls');
+    el.innerHTML = CONTROLS.map(c => `<div class="ctrl"><label for="c-${c.id}"><span>${c.label}</span><b id="cv-${c.id}"></b></label><input type="range" id="c-${c.id}" min="${c.min}" max="${c.max}" step="${c.step}"></div>`).join('') +
+      `<div class="ctrl"><label for="c-treat"><span>tratamento da dependência (§17.1, Ap. E)</span></label><select id="c-treat"><option value="naive">ingênuo (soma como independente)</option><option value="deflate">deflação por V (Prop. 6)</option><option value="whiten">branqueamento por inovações (Prop. 9)</option></select></div>
+       <div class="ctrl"><label for="c-Lmax"><span>teto L_max (step-up determinístico acima)</span></label><select id="c-Lmax"><option value="5000">R$ 5.000</option><option value="20000">R$ 20.000</option><option value="50000" selected>R$ 50.000</option><option value="1000000">sem teto</option></select></div>
+       <div class="ctrl"><label class="toggle" style="color:var(--bad)"><input type="checkbox" id="c-gate"> erro C6: abster janelas por escore (ℓ &lt; −0,5)</label><span class="small muted">Nunca faça isto: quebra a condição de supermartingale e a falsa aceitação vai de 4×10⁻⁴ para 0,9997 (teste T4). No simulador, o impostor passa a parecer o dono.</span></div>`;
+    CONTROLS.forEach(c => { const inp = $('#c-' + c.id); inp.value = c.get(); $('#cv-' + c.id).textContent = pt(c.fmt(c.get())); inp.addEventListener('input', () => { c.set(+inp.value); CONTROLS.forEach(x => { $('#cv-' + x.id).textContent = pt(x.fmt(x.get())); $('#c-' + x.id).value = x.get(); }); liveRender(); }); });
+    $('#c-treat').addEventListener('change', e => { live.p = { ...live.p, treatment: e.target.value }; });
+    $('#c-Lmax').addEventListener('change', e => { live.p = { ...live.p, Lmax: +e.target.value }; liveRender(); });
+    $('#c-gate').addEventListener('change', e => { live.p = { ...live.p, gateOnScore: e.target.checked }; addLog(e.target.checked ? 'ERRO C6 ligado: janelas com ℓ < −0,5 são descartadas (viés de seleção).' : 'Erro C6 desligado.', 'bad'); });
+  }
+
+  /* ============================================================ SENSORES ============================================================ */
+  const cl = { rec: null, startedLab: false, wl: null, timer: null, holder: 'owner', posture: 'sentado', busy: false, exp: null, lastErr: null, recovered: Promise.resolve() };
+  const lab = new SensorLab.Lab(onLabEvent);
+  const sn = { strip: [], lastRender: 0 };
+  function onLabEvent(type, data) {
+    if (type === 'error') { $('#sn-error').hidden = false; $('#sn-error').className = 'note bad'; $('#sn-error').textContent = data; snButtons(); }
+    if (type === 'warn') { $('#sn-error').hidden = false; $('#sn-error').className = 'note warn'; $('#sn-error').textContent = data; }
+    if (type === 'ready') { $('#sn-error').hidden = true; snButtons(); }
+    if (type === 'stopped') { snButtons(); if (cl.rec) clStop('sensores pararam (permissão negada ou nenhuma amostra)'); }
+    if (type === 'sample') { sn.strip.push({ a: Math.hypot(data.lx, data.ly, data.lz), w: Math.hypot(data.gx, data.gy, data.gz) }); if (sn.strip.length > 100) sn.strip.shift(); const now = performance.now(); if (now - sn.lastRender > 200) { sn.lastRender = now; snRenderSignals(); clSignals(); } }
+    if (type === 'window') snRender();
+    if (type === 'enrolled') { snRender(); if (data === 'owner') $('#sn-step1').classList.add('done'); else $('#sn-step2').classList.add('done'); }
+    if (type === 'tap') { const z = $('#sn-tap'); z.className = 'tapzone ' + (data.coherent ? 'hit' : 'miss'); z.textContent = data.coherent ? 'toque com transiente inercial: coerente' : 'toque SEM transiente inercial: incoerente'; setTimeout(() => { z.className = 'tapzone'; z.textContent = 'toque aqui com o aparelho na mão'; }, 1200); $('#sn-h9-coh').textContent = 'coerentes: ' + lab.h9.coh; $('#sn-h9-inc').textContent = 'incoerentes: ' + lab.h9.inc; $('#sn-h9-last').textContent = `pico ${data.peak.toFixed(2)} m/s² vs limiar ${data.thr.toFixed(2)}`; }
+    if (type === 'haptic') $('#sn-haptic-txt').textContent = pt(data.responded ? `envelope: pico ${data.peak.toFixed(2)} m/s² vs base ${data.base.toFixed(2)} em ${data.n} amostras (f_s ${data.fs ? data.fs.toFixed(0) : '?'} Hz) — portadora do LRA invisível nesta taxa; a janela com o pulso é abstida.` : `sem resposta mensurável (pico ${data.peak.toFixed(2)} vs base ${data.base.toFixed(2)} m/s²): motor mudo ou vibração não executada.`);
+  }
+  function snSupport() {
+    const b = $('#sn-support'), ios = /iP(hone|ad|od)/.test(navigator.userAgent);
+    if (!lab.supported) { b.textContent = 'sem DeviceMotion'; b.className = 'badge bad'; }
+    else if (lab.needsPermission) { b.textContent = 'exige permissão de movimento' + (ios ? ' (iOS)' : ''); b.className = 'badge warn'; }
+    else { b.textContent = 'DeviceMotion disponível'; b.className = 'badge ok'; }
+    if (!window.isSecureContext && location.protocol !== 'file:') { b.textContent += ' · contexto não seguro'; b.className = 'badge warn'; }
+  }
+  function snButtons() {
+    const live = lab.running && lab._runSamples > 0, has = !!lab.template;
+    const recOn = !!cl.rec;
+    $('#sn-start').disabled = lab.running; $('#sn-stop').disabled = !lab.running || recOn; $('#sn-clear').disabled = recOn;
+    $('#sn-enroll').disabled = !live; $('#sn-enroll2').disabled = !live || !has;
+    $('#sn-save').disabled = !has; $('#sn-csv').disabled = lab.windows.length === 0; $('#sn-strong').disabled = !has;
+    $('#sn-label-owner').disabled = !has; $('#sn-label-other').disabled = !has; $('#sn-haptic').disabled = !live;
+    $('#sn-label-owner').setAttribute('aria-pressed', String(lab.sessionLabel === 'owner'));
+    $('#sn-label-other').setAttribute('aria-pressed', String(lab.sessionLabel === 'other'));
+    if (!lab.running) $('#sn-mode').textContent = lab.samples ? 'parado' : 'aguardando'; else if (lab._runSamples === 0) $('#sn-mode').textContent = 'aguardando amostras…';
+  }
+  $('#sn-start').addEventListener('click', async () => {
+    $('#sn-error').hidden = true; $('#sn-start').disabled = true;
+    try { await lab.start(); } catch (e) { $('#sn-error').hidden = false; $('#sn-error').className = 'note bad'; $('#sn-error').textContent = e.message; }
+    snButtons();
+  });
+  $('#sn-stop').addEventListener('click', () => { lab.stop(); snButtons(); clSignals(); });
+  $('#sn-enroll').addEventListener('click', () => { lab.beginEnroll('owner'); $('#sn-step1').classList.remove('done'); setHolder('owner'); });
+  $('#sn-enroll2').addEventListener('click', () => { lab.beginEnroll('other'); $('#sn-step2').classList.remove('done'); setHolder('other'); });
+  $('#sn-load').addEventListener('click', () => { if (lab.loadTemplate()) { $('#sn-step1').classList.add('done'); snButtons(); snRender(); } else alert('Nenhum template válido salvo neste navegador.'); });
+  $('#sn-save').addEventListener('click', () => alert(lab.saveTemplate() ? 'Template salvo neste navegador.' : 'Nada para salvar ou armazenamento bloqueado.'));
+  $('#sn-clear').addEventListener('click', () => { if (cl.rec) return; lab.stop(); lab.reset(); sn.strip = []; try { localStorage.removeItem('imu_template'); } catch {} $('#sn-step1').classList.remove('done'); $('#sn-step2').classList.remove('done'); $('#sn-stepup').dataset.key = ''; $('#sn-h9-coh').textContent = 'coerentes: 0'; $('#sn-h9-inc').textContent = 'incoerentes: 0'; $('#sn-h9-last').textContent = ''; setHolder('owner'); snButtons(); snRender(); snRenderSignals(); });
+  $('#sn-label-owner').addEventListener('click', () => setHolder('owner'));
+  $('#sn-label-other').addEventListener('click', () => setHolder('other'));
+  $('#sn-strong').addEventListener('click', () => { lab.strongFactor(); setHolder('owner'); });
+  $('#sn-tremor').addEventListener('change', e => { lab.useTremor = e.target.checked; snRender(); });
+  $('#sn-haptic').addEventListener('click', () => { if (!lab.hapticPulse(46)) $('#sn-haptic-txt').textContent = 'navigator.vibrate indisponível (iOS/Safari não expõe; no Android ative os sensores primeiro).'; else $('#sn-haptic-txt').textContent = 'pulso disparado; medindo envelope…'; });
+  $('#sn-csv').addEventListener('click', () => downloadFile(new Blob([lab.csv()], { type: 'text/csv;charset=utf-8' }), `janelas_imu_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`));
+  $('#sn-tap').addEventListener('pointerdown', () => { if (!lab.running) { $('#sn-h9-last').textContent = 'ative os sensores primeiro'; return; } lab.onTouch(); });
+
+  function snRenderSignals() {
+    if (currentTab !== 'sensor') return;
+    const n = 100, pad = n - sn.strip.length, P = a => Array(pad).fill(null).concat(a);
+    chart($('#sn-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ data: P(sn.strip.map(s => s.a)), color: cssVar('--info') }, { data: P(sn.strip.map(s => s.w)), color: cssVar('--warn') }], yMin: 0 });
+  }
+  function snRender() {
+    if (currentTab !== 'sensor') return;
+    $('#sn-rate').textContent = 'f_s medida: ' + (lab.fs ? lab.fs.toFixed(1) + ' Hz (janela ' + Math.round(4 * lab.fs) + ' amostras)' : '—');
+    $('#sn-count').textContent = lab.samples ? `${lab.samples} amostras · ${lab.windows.length} janelas` : '';
+    $('#sn-prog1').style.width = (100 * Math.min(1, lab.enroll.owner.length / SensorLab.ENROLL_WINDOWS)) + '%';
+    $('#sn-prog2').style.width = (100 * Math.min(1, lab.enroll.other.length / SensorLab.ENROLL_WINDOWS)) + '%';
+    $('#sn-enroll-txt').textContent = lab.mode === 'enroll-owner' ? `${lab.enroll.owner.length}/${SensorLab.ENROLL_WINDOWS} janelas válidas` : lab.template ? `template com ${lab.template.n} janelas` : '';
+    $('#sn-enroll2-txt').textContent = lab.mode === 'enroll-other' ? `${lab.enroll.other.length}/${SensorLab.ENROLL_WINDOWS} janelas válidas` : lab.cohort ? `coorte com ${lab.cohort.n} janelas (1 pessoa)` : '';
+    snButtons();
+    const modes = { idle: 'aguardando', 'enroll-owner': 'cadastrando titular', 'enroll-other': 'cadastrando segunda pessoa', monitor: 'monitorando' };
+    $('#sn-mode').textContent = modes[lab.mode] + (lab.mode === 'monitor' ? ` · rótulo: ${lab.sessionLabel === 'owner' ? 'dono' : 'outra pessoa'}` : '');
+    const w = lab.windows[lab.windows.length - 1];
+    if (w) {
+      $('#sn-gate').innerHTML = (w.q ? '<span class="badge ok">q = 1 · janela pontua</span>' : '<span class="badge warn">q = 0 · abstida</span>') + w.reasons.map(r => `<span class="badge neutral">${esc(r)}</span>`).join('');
+      const f = w.f;
+      $('#sn-feat').innerHTML = [['RMS |a_lin|', f.la.toFixed(3) + ' m/s²'], ['RMS |ω|', f.lw.toFixed(3) + ' rad/s'], ['P_ω 0,5–4 Hz', f.pv.toExponential(2) + ' rad²/s²'], ['P_ω 4–12 Hz', f.pt.toExponential(2) + ' rad²/s²'], ['inclinação da tela', f.tilt.toFixed(0) + '°'], ['â = (x,y,z)', `${f.ax.toFixed(2)}, ${f.ay.toFixed(2)}, ${f.az.toFixed(2)}`], ['oscilação std(â)', f.sw.toFixed(3)], ['RMS jerk', f.jerk.toFixed(1) + ' m/s³'], ['entropia espectral', f.he.toFixed(2)], ['d_M ao template', w.dM == null ? '—' : w.dM.toFixed(2)], ['ℓ bruto / usado', w.lraw == null ? '—' : `${w.lraw.toFixed(2)} / ${Number.isFinite(w.l) ? w.l.toFixed(2) : 'inválido'}`]].map(([k, v]) => `<dt>${k}</dt><dd>${pt(v)}</dd>`).join('');
+    }
+    const dp = lab.dprimeEffective(), rh = lab.rhoHat();
+    $('#sn-model').innerHTML = [
+      ['titular f_G', lab.template ? `gaussiana diagonal, ${Number(lab.template.n)} janelas de uma postura (variância encolhida, n₀ = 10; mudar de postura ou de mão custa evidência)` : 'sem template'],
+      ['impostor f_I', lab.cohort ? `coorte medida (${Number(lab.cohort.n)} janelas de 1 pessoa — ainda não é população)` : 'prior de população DECLARADO (hipótese), não centrado no titular (§11.3)'],
+      ['d′ efetivo (template × f_I)', dp ? dp.total.toFixed(2) + ' por janela' : '—'],
+      ['dependência', `deflação V = ${lab.V} (janelas de 4 s com 50 % de sobreposição: ρ₁ = ½, Prop. 6)` + (rh != null ? ` · ρ̂₁ medido (dono, janelas pontuadas) = ${pt(rh.toFixed(2))} ⇒ V̂ ≈ ${pt((1 + 2 * Math.max(0, rh)).toFixed(1))}` : '')],
+      ['eixos', lab.flipSign ? 'iOS/WebKit: sinal da gravidade invertido para a convenção da spec (+z em repouso)' : 'convenção da spec (reação à gravidade +z em repouso)' + (lab.noGyro ? ' · sem giroscópio: janelas abstidas' : '')],
+      ['corte do LLR', `ℓ ≤ +${SensorLab.CLIP_UP} nats (só por cima: preserva o supermartingale)`],
+      ['garantia de Ville', lab.cohort ? 'só com população medida e LLR calibrado (H7)' : 'NÃO vale: f_I é prior declarado'],
+    ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+    if (dp) chart($('#sn-cd'), { n: dp.per.length, series: [{ type: 'bar', data: dp.per, color: cssVar('--accent') }], yMin: 0, xLabels: SensorLab.FEAT.map((f, i) => [i, f.k]) });
+    const s = lab.session;
+    const badge = $('#sn-badge');
+    if (!lab.template) { badge.className = 'badge neutral'; badge.textContent = 'sem template'; }
+    else if (s.revoked) { badge.className = 'badge bad'; badge.textContent = 'Sessão revogada'; }
+    else if (s.stepUpPending) { badge.className = 'badge warn'; badge.textContent = 'Step-up pendente'; }
+    else { badge.className = 'badge ok'; badge.textContent = 'Sessão íntegra'; }
+    $('#sn-clock').textContent = `t = ${s.t} s · passo ${s.k}`;
+    renderMetrics($('#sn-metrics'), s, lab.p);
+    renderActions($('#sn-actions'), s, lab.p);
+    renderStepUp($('#sn-stepup'), s, lab.sessionLabel === 'owner', approved => { lab.resolveStepUp(approved); snRender(); });
+    const W = lab.windows.filter(x => x.session).slice(-60), n = 60, pad = n - W.length, P = a => Array(pad).fill(null).concat(a);
+    const good = cssVar('--good'), bad = cssVar('--bad'), info = cssVar('--info'), warn = cssVar('--warn'), violet = cssVar('--violet'), muted = cssVar('--muted');
+    const xl = [[0, '−120 s'], [n - 1, 'agora']];
+    const clampL = v => Math.max(-6, Math.min(6, v));
+    chart($('#sn-c1'), { n, xLabels: xl, series: [{ type: 'bar', data: P(W.map(x => x.q ? clampL(x.l) : NaN)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { data: P(W.map(x => Math.max(-20, x.session.Lambda))), color: info }], hlines: [{ y: E.lnB(s.r), color: info, label: 'ln B_r' }], yMin: -6, yMax: 6 });
+    chart($('#sn-c2'), { n, xLabels: xl, series: [{ data: P(W.map(x => x.session.C)), color: warn }], hlines: [{ y: lab.p.h, color: bad, label: 'h' }], yMin: 0, yMax: lab.p.h * 1.1, hardMin: true });
+    const thr = L => Math.log10(E.phiThreshold(lab.p, L));
+    chart($('#sn-c3'), { n, xLabels: xl, series: [{ data: P(W.map(x => x.session.phi > 0 ? Math.log10(x.session.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
+  }
+
+  /* ============================================================ COLETAR ============================================================ */
+  const store = new Recorder.Store();
+  const HOLDER_TXT = { owner: 'titular', other: 'outra pessoa', table: 'apoiado' };
+  const META_KEYS = ['pid', 'hand', 'case', 'notes'];
+  const fmtDur = sec => { const s = Math.max(0, Math.floor(sec || 0)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, p2 = v => String(v).padStart(2, '0'); return (h ? h + ':' + p2(m) : p2(m)) + ':' + p2(x); };
+  function downloadFile(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 60000);   // iOS só baixa depois da confirmação do usuário
+  }
+  function clMsg(text, cls) { const m = $('#cl-msg'); if (!text) { m.hidden = true; return; } m.hidden = false; m.className = 'note ' + (cls || 'warn'); m.textContent = text; }
+  function metaSummary() { const pid = $('#cl-pid').value.trim(); $('#cl-meta-sum').textContent = `${pid || 'sem código'} · ${$('#cl-hand').value} · ${$('#cl-case').value}`; }
+  function saveMeta() { const j = {}; META_KEYS.forEach(k => { j[k] = $('#cl-' + k).value; }); try { localStorage.setItem('cl_meta', JSON.stringify(j)); } catch {} metaSummary(); }
+  function loadMeta() {
+    try { const j = JSON.parse(localStorage.getItem('cl_meta') || '{}'); META_KEYS.forEach(k => { const el = $('#cl-' + k); if (typeof j[k] === 'string' && (el.tagName !== 'SELECT' || [...el.options].some(o => o.value === j[k]))) el.value = j[k]; }); } catch {}
+    metaSummary();
+  }
+
+  /* quem segura: um único estado para Coletar e Sensores (o rótulo nunca decide q_k) */
+  function setHolder(v) {
+    if (!HOLDER_TXT[v]) return;
+    const changed = v !== cl.holder; cl.holder = v;
+    $$('#cl-holder button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+    if (v !== 'table') lab.setLabel(v);
+    $('#sn-label-owner').setAttribute('aria-pressed', String(lab.sessionLabel === 'owner'));
+    $('#sn-label-other').setAttribute('aria-pressed', String(lab.sessionLabel === 'other'));
+    if (cl.rec && changed) { cl.rec.event('holder', v); clEvents(); }
+    snRender();
+  }
+  function setPosture(v) {
+    const changed = v !== cl.posture; cl.posture = v;
+    $$('#cl-posture button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+    if (cl.rec && changed) { cl.rec.event('posture', v); clEvents(); }
+  }
+
+  async function wake(on) {
+    try {
+      if (on && 'wakeLock' in navigator && !cl.wl && !document.hidden) {
+        const w = await navigator.wakeLock.request('screen');
+        if (!cl.rec) { w.release().catch(() => {}); return clUI(); }   // a gravação parou enquanto o pedido estava pendente
+        cl.wl = w;
+        w.addEventListener('release', () => { if (cl.wl === w) cl.wl = null; clUI(); });
+      } else if (!on && cl.wl) { const w = cl.wl; cl.wl = null; await w.release(); }
+    } catch { cl.wl = null; }
+    clUI();
+  }
+
+  async function clStart() {
+    if (cl.rec || cl.busy) return;
+    if (!lab.supported) { clMsg('Este navegador não expõe DeviceMotion. Abra no iPhone pelo Safari, via HTTPS.', 'bad'); return; }
+    cl.busy = true; clMsg(null);
+    const wasRunning = lab.running;
+    const starting = wasRunning ? null : lab.start();          // pedido de permissão do iOS ainda dentro do toque: nada é aguardado antes
+    clUI();
+    try { if (starting) await starting; } catch (e) { cl.busy = false; clMsg(e.message, 'bad'); clUI(); return; }
+    if (!lab.running) { cl.busy = false; clMsg('Os sensores não iniciaram. Verifique a permissão de Movimento e Orientação.', 'bad'); clUI(); return; }
+    if (lab.permission === 'denied' || lab.permission === 'error') {
+      if (!wasRunning) lab.stop();
+      cl.busy = false; clMsg('Permissão de Movimento e Orientação negada. No iPhone: Ajustes › Apps › Safari › Avançado › Dados de Sites, apague este site e toque em Gravar de novo.', 'bad'); clUI(); return;
+    }
+    await cl.recovered;
+    cl.startedLab = !wasRunning;
+    await store.ready;
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch {}
+    const meta = {
+      participant: $('#cl-pid').value.trim().slice(0, 40), hand: $('#cl-hand').value, case: $('#cl-case').value, notes: $('#cl-notes').value.slice(0, 500),
+      userAgent: navigator.userAgent, platform: navigator.platform || '', screen: `${screen.width}x${screen.height}@${window.devicePixelRatio || 1}`,
+      orientation: (screen.orientation && screen.orientation.type) || '', secureContext: !!window.isSecureContext, motionPermission: lab.permission || 'não solicitada',
+      rawSignConvention: 'valores como entregues pelo navegador; no iOS/WebKit accelerationIncludingGravity tem sinal oposto ao da spec W3C (repouso ≈ −g em z). A análise do painel inverte o sinal só internamente.',
+      analysisFlipSign: !!lab.flipSign, storage: store.persistent ? 'indexeddb' : 'memória', app: 'IMU Auth · painel v9 · coleta v' + Recorder.VERSION,
+    };
+    cl.rec = new Recorder.Recording(store, meta);
+    cl.rec.event('start', ''); cl.rec.event('holder', cl.holder); cl.rec.event('posture', cl.posture);
+    lab.onRaw = ev => { if (cl.rec) cl.rec.push(ev); };
+    cl.busy = false; clearInterval(cl.timer); cl.timer = setInterval(clTick, 250);
+    wake(true); clUI(); clEvents(); snButtons();
+    cl.rec.flush().then(clList);
+  }
+  async function clStop(reason) {
+    if (!cl.rec) return;
+    const rec = cl.rec; cl.rec = null; lab.onRaw = null; clearInterval(cl.timer); cl.busy = true; clUI();
+    try {
+      const m = await rec.finish(reason || 'stopped');
+      if (!m.n) { await store.remove(m.id).catch(() => {}); clMsg(reason ? `Gravação descartada: nenhuma amostra recebida (${reason}).` : 'Gravação descartada: nenhuma amostra recebida.', 'warn'); }
+      else clMsg(reason ? `Gravação interrompida: ${reason}. ${m.n} amostras até aqui foram salvas.` : null, 'warn');
+    } catch (e) { clMsg('Falha ao salvar a gravação: ' + (e && e.message || e) + '. Exporte logo o que estiver na lista.', 'bad'); }
+    if (cl.startedLab && lab.running && lab.mode === 'idle') lab.stop();   // não derruba cadastro/monitoramento iniciado na aba Sensores
+    cl.startedLab = false; cl.busy = false;
+    await wake(false); clTick(rec); clUI(); clSignals(); clList(); snButtons();
+  }
+  function clTick(done) {
+    const r = cl.rec || done; if (!r || !r.meta) return;
+    $('#cl-timer').textContent = fmtDur(r.meta.duration);
+    $('#rec-chip-t').textContent = fmtDur(r.meta.duration);
+    $('#cl-n').textContent = r.meta.n.toLocaleString('pt-BR');
+    const fs = r.fs; $('#cl-fs').textContent = fs ? fs.toFixed(0) : '—';
+    $('#cl-gaps').textContent = String(r.meta.gaps);
+    if (cl.rec && store.degraded) { if (cl.lastErr !== 'mem') { cl.lastErr = 'mem'; clMsg('O armazenamento do aparelho falhou; a gravação continua só na memória. Não feche nem recarregue a página e exporte ao terminar.', 'bad'); } }
+    else if (cl.rec && r.error) { if (cl.lastErr !== r.error) { cl.lastErr = r.error; clMsg(`Falha ao salvar (${r.error.message || r.error}); tentando de novo. ${r.unsaved} amostras aguardando.`, 'warn'); } }
+    else if (cl.rec && cl.lastErr) { cl.lastErr = null; clMsg(null); }
+    if (cl.rec && r.meta.n === 0 && r.meta.duration === 0 && performance.now() - (r._t || (r._t = performance.now())) > 2500) clMsg('Sem amostras ainda. Se nada mudar, toque em Parar e verifique a permissão de movimento.', 'warn');
+    else if (cl.rec && r.meta.n > 0 && $('#cl-msg').textContent.startsWith('Sem amostras')) clMsg(null);
+  }
+  function clUI() {
+    const on = !!cl.rec, hero = $('#cl-hero'), btn = $('#cl-rec');
+    hero.classList.toggle('recording', on);
+    btn.setAttribute('aria-pressed', String(on)); btn.disabled = cl.busy || !lab.supported;
+    $('#cl-rec-lbl').textContent = cl.busy ? (on ? 'Salvando…' : 'Iniciando…') : on ? 'Parar' : 'Gravar';
+    const st = $('#cl-state');
+    if (on) { st.className = 'badge rec'; st.textContent = 'gravando'; }
+    else if (!lab.supported) { st.className = 'badge bad'; st.textContent = 'sem sensores de movimento'; }
+    else if (!window.isSecureContext) { st.className = 'badge warn'; st.textContent = 'precisa de HTTPS'; }
+    else { st.className = 'badge neutral'; st.textContent = 'pronto para gravar'; }
+    const wk = $('#cl-wake'), hasWL = 'wakeLock' in navigator;
+    const standalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+    if (on && cl.wl && standalone && /iP(hone|ad|od)/.test(navigator.userAgent)) { wk.className = 'badge warn'; wk.textContent = 'tela: ponha Bloqueio Automático em Nunca'; }
+    else if (on && cl.wl) { wk.className = 'badge ok'; wk.textContent = 'tela fica acesa'; }
+    else if (on) { wk.className = 'badge warn'; wk.textContent = hasWL ? 'tela pode apagar' : 'mantenha a tela acesa'; }
+    else { wk.className = 'badge neutral'; wk.textContent = hasWL ? 'tela acesa: automático' : 'tela acesa: manual'; }
+    $('#cl-mark').disabled = !on;
+    META_KEYS.forEach(k => { $('#cl-' + k).disabled = on; });
+    $('#rec-chip').hidden = !on;
+    $$('#cl-list button[data-id]').forEach(b => { b.disabled = on; b.title = on ? 'Pare a gravação para exportar ou apagar (evita lacunas na coleta)' : ''; });
+  }
+  function clEvents() {
+    const r = cl.rec; const el = $('#cl-events');
+    if (!r) { el.innerHTML = ''; return; }
+    const lbl = { start: 'início', holder: 'segura', posture: 'postura', marker: 'marcador', gap: 'lacuna', hidden: 'segundo plano', visible: 'primeiro plano', stop: 'fim', note: 'nota' };
+    const val = e => e.type === 'holder' ? HOLDER_TXT[e.value] || e.value : e.value;
+    el.innerHTML = r.meta.events.slice(-8).reverse().map(e => `<li class="${e.type === 'gap' || e.type === 'hidden' ? 'warn' : e.type === 'marker' ? 'good' : ''}"><time>${fmtDur(e.t)}</time><span>${esc(lbl[e.type] || e.type)}${val(e) ? ': ' + esc(val(e)) : ''}</span></li>`).join('');
+  }
+  function clSignals() {
+    if (currentTab !== 'collect') return;
+    const n = 100, pad = n - sn.strip.length, P = a => Array(pad).fill(null).concat(a);
+    chart($('#cl-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ data: P(sn.strip.map(s => s.a)), color: cssVar('--info') }, { data: P(sn.strip.map(s => s.w)), color: cssVar('--warn') }], yMin: 0 });
+    $('#cl-sig-note').textContent = lab.running ? (lab.noGyro ? 'sem giroscópio' : '') : 'sensores parados';
+  }
+
+  async function clList() {
+    await store.ready;
+    let list = [];
+    try { list = await store.list(); } catch (e) { $('#cl-list').innerHTML = `<p class="small" style="color:var(--bad)">Não foi possível ler as gravações: ${esc(e && e.message || e)}</p>`; return; }
+    const sb = $('#cl-store'); sb.textContent = store.persistent ? 'salvas no aparelho' : 'só em memória'; sb.className = 'badge ' + (store.persistent ? 'neutral' : 'warn');
+    try { if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate(); if (e && e.usage != null) sb.textContent += ` · ${(e.usage / 1e6).toFixed(1)} MB`; } } catch {}
+    if (!list.length) { $('#cl-list').innerHTML = '<p class="small muted">Nenhuma gravação ainda.</p>'; return; }
+    const ST = { done: ['ok', 'completa'], recording: ['rec', 'gravando'], interrupted: ['warn', 'interrompida'] };
+    $('#cl-list').innerHTML = list.map(m => {
+      const d = new Date(m.startedAt), st = ST[m.status] || ['neutral', esc(m.status)];
+      const markers = (m.events || []).filter(e => e.type === 'marker').length;
+      return `<div class="recitem"><div class="ttl">${esc(m.participant || 'sem código')} <span class="small muted">${esc(d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }))}</span> <span class="badge ${st[0]}">${st[1]}</span></div>
+        <div class="meta">${fmtDur(m.duration)} · ${Number(m.n || 0).toLocaleString('pt-BR')} amostras · ${m.fs ? Number(m.fs).toFixed(0) + ' Hz' : '— Hz'} · ${Number(m.gaps || 0)} lacunas · ${markers} marcadores</div>
+        <div class="acts"><button class="btn sm primary" data-act="export" data-id="${esc(m.id)}">Exportar</button><button class="btn sm danger" data-act="delete" data-id="${esc(m.id)}" aria-label="Apagar gravação">Apagar</button></div></div>`;
+    }).join('');
+    clUI();
+  }
+  function openDialog(d) { try { if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', ''); } catch { d.setAttribute('open', ''); } }
+  function closeDialog(d) { try { if (d.close) d.close(); else d.removeAttribute('open'); } catch { d.removeAttribute('open'); } }
+  async function clExport(id) {
+    const dlg = $('#cl-dialog'), btns = ['#cl-share', '#cl-dl-csv', '#cl-dl-ev', '#cl-dl-json'];
+    cl.exp = null; btns.forEach(s => { $(s).disabled = true; });
+    $('#cl-dtitle').textContent = 'Exportar gravação'; $('#cl-dinfo').textContent = 'preparando arquivos…'; openDialog(dlg);
+    try {
+      const meta = await store.getMeta(id); if (!meta) throw new Error('gravação não encontrada');
+      const s = await store.samples(id), base = Recorder.baseName(meta);
+      await new Promise(r => setTimeout(r, 0));
+      const files = [
+        new File([Recorder.toCSV(meta, s)], base + '.csv', { type: 'text/csv' }),
+        new File([Recorder.eventsCSV(meta)], base + '_eventos.csv', { type: 'text/csv' }),
+        new File([Recorder.toJSON(meta, s)], base + '.json', { type: 'application/json' }),
+      ];
+      cl.exp = { base, files };
+      const mb = files.reduce((t, f) => t + f.size, 0) / 1e6;
+      $('#cl-dtitle').textContent = base;
+      $('#cl-dinfo').textContent = `${s.n.toLocaleString('pt-BR')} amostras · ${fmtDur(meta.duration)} · ${(meta.events || []).length} eventos · ${mb.toFixed(1)} MB em 3 arquivos`;
+      let canShare = false; try { canShare = !!(navigator.canShare && navigator.canShare({ files })); } catch {}
+      $('#cl-share').disabled = !canShare; $('#cl-share').textContent = canShare ? 'Compartilhar (AirDrop, Arquivos, e-mail)' : 'Compartilhar indisponível aqui: use os downloads';
+      ['#cl-dl-csv', '#cl-dl-ev', '#cl-dl-json'].forEach(s2 => { $(s2).disabled = false; });
+    } catch (e) { $('#cl-dinfo').textContent = 'Falha ao preparar: ' + (e && e.message || e); }
+  }
+  async function clDelete(id) {
+    const m = await store.getMeta(id).catch(() => null); if (!m) return;
+    if (!confirm(`Apagar a gravação de ${m.participant || 'sem código'} (${fmtDur(m.duration)}, ${m.n} amostras)? Não dá para desfazer. Exporte antes se precisar dos dados.`)) return;
+    try { await store.remove(id); } catch (e) { clMsg('Não foi possível apagar: ' + (e && e.message || e), 'bad'); }
+    clList();
+  }
+
+  function clInit() {
+    loadMeta();
+    META_KEYS.forEach(k => { $('#cl-' + k).addEventListener('input', saveMeta); $('#cl-' + k).addEventListener('change', saveMeta); });
+    $$('#cl-holder button').forEach(b => b.addEventListener('click', () => setHolder(b.dataset.v)));
+    $$('#cl-posture button').forEach(b => b.addEventListener('click', () => setPosture(b.dataset.v)));
+    $('#cl-rec').addEventListener('click', () => { if (cl.rec) clStop(); else clStart(); });
+    $('#rec-chip').addEventListener('click', () => showTab('collect'));
+    const mark = () => { if (!cl.rec) return; const t = $('#cl-mtext').value.trim(); cl.rec.event('marker', t || 'marcador'); $('#cl-mtext').value = ''; clEvents(); };
+    $('#cl-mark').addEventListener('click', mark);
+    $('#cl-mtext').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); mark(); } });
+    $('#cl-list').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b || b.disabled) return; if (b.dataset.act === 'export') clExport(b.dataset.id); else if (b.dataset.act === 'delete') clDelete(b.dataset.id); });
+    $('#cl-share').addEventListener('click', async () => { if (!cl.exp) return; try { await navigator.share({ files: cl.exp.files, title: cl.exp.base }); } catch (e) { if (!e || e.name !== 'AbortError') $('#cl-dinfo').textContent = 'Compartilhar falhou: ' + (e && e.message || e) + '. Use os downloads.'; } });
+    $('#cl-dl-csv').addEventListener('click', () => cl.exp && downloadFile(cl.exp.files[0], cl.exp.files[0].name));
+    $('#cl-dl-ev').addEventListener('click', () => cl.exp && downloadFile(cl.exp.files[1], cl.exp.files[1].name));
+    $('#cl-dl-json').addEventListener('click', () => cl.exp && downloadFile(cl.exp.files[2], cl.exp.files[2].name));
+    $('#cl-dialog').addEventListener('click', e => { if (e.target === e.currentTarget) closeDialog(e.currentTarget); });
+    $('#cl-dialog .btn.ghost').addEventListener('click', e => { e.preventDefault(); closeDialog($('#cl-dialog')); });
+    document.addEventListener('visibilitychange', () => {
+      if (!cl.rec) return;
+      cl.rec.event(document.hidden ? 'hidden' : 'visible', document.hidden ? 'página em segundo plano: o iOS para de entregar amostras' : 'página de volta ao primeiro plano');
+      if (document.hidden) cl.rec.flush(); else wake(true);
+      clEvents();
+    });
+    window.addEventListener('pagehide', () => { if (cl.rec) cl.rec.flush(); });
+    if (!lab.supported) clMsg('Este navegador não expõe sensores de movimento (DeviceMotion). Para coletar, abra a página no Safari do iPhone, por HTTPS.', 'warn');
+    else if (!window.isSecureContext) clMsg('A página não está em HTTPS: o iPhone não libera os sensores. Veja “Como coletar no iPhone”.', 'warn');
+    clUI();
+    const setBarH = () => document.documentElement.style.setProperty('--appbar-h', $('.appbar').offsetHeight + 'px');
+    setBarH(); window.addEventListener('resize', setBarH);
+    cl.recovered = store.ready.then(() => store.recoverInterrupted(cl.rec && cl.rec.id)).then(k => { if (k) clMsg(`${k} gravação(ões) ficaram abertas quando a página fechou; estão marcadas como interrompidas e podem ser exportadas.`, 'warn'); }).catch(() => {}).then(clList);
+  }
+
+  /* ============================================================ TESTES ============================================================ */
+  const tbody = $('#ts-table tbody');
+  function tsInit() { tbody.innerHTML = E.TESTS.map(t => `<tr id="ts-${t.id}"><td class="mono">${t.id}</td><td>${t.name}</td><td class="small">${t.ref}</td><td class="mono small">—</td><td class="pend">pendente</td><td class="mono small">—</td></tr>`).join(''); }
+  function tsRow(i, res, ms) { const row = $('#ts-' + E.TESTS[i].id); row.cells[3].textContent = pt(res.text); row.cells[4].innerHTML = res.ok ? '<span class="pass">passou</span>' : '<span class="fail">falhou</span>'; row.cells[5].textContent = ms.toFixed(0); }
+  // roda em Web Worker (motor sem DOM) para não travar a simulação e os sensores; cai para o thread principal se indisponível
+  function tsWorker() {
+    try {
+      const src = ($('#engine-js') || $('script')).textContent + '\nonmessage = e => { const seed = e.data.seed; for (let i = 0; i < AuthEngine.TESTS.length; i++) { const t0 = Date.now(); let res; try { res = AuthEngine.TESTS[i].run(seed + 1000 * i); } catch (err) { res = { text: "erro: " + err.message, ok: false }; } postMessage({ i, res: { text: res.text, ok: !!res.ok }, ms: Date.now() - t0 }); } postMessage({ done: true }); };';
+      return new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    } catch { return null; }
+  }
+  $('#ts-run').addEventListener('click', async () => {
+    const btn = $('#ts-run'); btn.disabled = true; tsInit(); const seed = +$('#ts-seed').value || 20261025; let pass = 0, n = 0; const t0 = performance.now();
+    E.TESTS.forEach(t => { $('#ts-' + t.id).cells[4].textContent = 'rodando…'; });
+    const finish = () => { $('#ts-summary').textContent = pt(`${pass}/${E.TESTS.length} passaram em ${((performance.now() - t0) / 1000).toFixed(1)} s`); btn.disabled = false; };
+    const w = tsWorker();
+    if (w) {
+      w.onmessage = e => { if (e.data.done) { w.terminate(); finish(); return; } const { i, res, ms } = e.data; if (res.ok) pass++; n++; tsRow(i, res, ms); $('#ts-summary').textContent = pt(`${pass}/${n} passaram…`); };
+      w.onerror = () => { w.terminate(); $('#ts-summary').textContent = 'Worker falhou; rodando no thread principal…'; runSync(); };
+      w.postMessage({ seed }); return;
+    }
+    runSync();
+    async function runSync() {
+      pass = 0;
+      for (let i = 0; i < E.TESTS.length; i++) {
+        await new Promise(r => setTimeout(r, 20));
+        const s0 = performance.now(); let res;
+        try { res = E.TESTS[i].run(seed + 1000 * i); } catch (e) { res = { text: 'erro: ' + e.message, ok: false }; }
+        if (res.ok) pass++; tsRow(i, res, performance.now() - s0);
+      }
+      finish();
+    }
+  });
+  tsInit();
+
+  /* ============================================================ CORREÇÕES & COMO FUNCIONA ============================================================ */
+  const VERDICTS = [
+    ['C1 · cota média sob impostores heterogêneos (§9.4)', 'MGF da normal truncada: 8,56α (−∞,1), 8,90α retificado, 16,8α meia-normal [0,1); a v7 trazia 7,9α.', 'ok', 'Aceito e conferido: a forma fechada entra no v9; T10 reproduz 8,56 / 8,90 / 16,80 por fórmula e por integração numérica. Os 7,9α só saem de um truncamento simétrico em [−0,52; 0,52], que não é o modelo enunciado.'],
+    ['C2 · raio do UBM centrado no titular (§11.3)', 'Trocar √(2c ln c/(c−1)) σ_G por √(D c ln c/(c−1)) em distância de Mahalanobis.', 'v8', 'Já estava na v8 (marca v8 C3): r*(c,D) = √(D c ln c/(c−1)); para c=4, D=10, r* ≈ 4,3 contém ≈95 % da massa genuína. O painel antigo cometia exatamente esse erro; o novo usa prior declarado ou coorte medida.'],
+    ['C3 · q_exp, resíduo e Jacobiano de Madgwick, forma de Joseph (§4.1, §5.2)', 'Padronizar q_exp(φ) = exp([0, φ/2]) e explicitar f(q_IB), J(q_IB) e P⁺ de Joseph.', 'ok', 'Aceito: f e J explícitos na convenção q_IB (â aponta para +z_I em repouso; f coincide com a 3ª linha de R_B^I e J confere por diferenças finitas) e forma de Joseph logo após a eq. (20). A notação q_exp já estava na v8 (C10 da v8); a frase sobre S³ como revestimento duplo de SO(3) não entrou.'],
+    ['C4 · nomenclatura roll/pitch e “degenerescência em φ = 90°” (§10.2)', 'Distinguir Tait–Bryan ZYX da inclinação anatômica; afirmava singularidade em φ_roll = 90°.', 'fix', 'Nomenclatura aceita e uso de â ∈ S² como feature recomendado. A singularidade de carta é em θ = ±90° (a_x = ±g, aparelho de lado), não em φ = 90°, onde atan2(a_y,a_z) é bem definido. Rejeitada a parte da degenerescência.'],
+    ['C5 · Coriolis e rigidez gravitacional (§3, §10.1)', 'Explicitar termos de Coriolis com r_IMU móvel e rigidez efetiva K_u ± K_grav.', 'fix', 'Aceito com sinal corrigido: K_ef = K_u − G, G ≈ m g l_cm cos ϑ para centro de massa acima do pivô (pêndulo invertido reduz a rigidez). O documento oscilava entre ±; o Apêndice E usa o potencial restaurador líquido K δθ − τ_g.'],
+    ['C6 · gating e martingale (§7, Prop. 1)', 'q_k deve ser previsível/ancilar; descartar janelas por ℓ negativo quebra a supermartingale.', 'ok', 'Aceito e é o achado mais importante: gate por escore leva a falsa aceitação de 4×10⁻⁴ a 0,9997 em 5 min (T4). No painel, o gating usa só estatísticas de captura; há um interruptor “erro C6” para ver o estrago.'],
+    ['C7 · Lomb–Scargle com lacunas periódicas (N5)', 'Detrending linear por sub-segmento e suavização em banda antes do periodograma.', 'ok', 'Aceito: detrending piecewise, periodograma suavizado (o bruto tem variância χ²₂), janela espectral efetiva publicada por janela e comparação com multitaper/AR de Burg.'],
+    ['C8 · limite de Lorden com margem ν (eq. 67)', 'ARL₀ ≥ e^{θ₀h} com θ₀ = 1 + ν/μ no modelo gaussiano, não só e^h.', 'ok', 'Aceito e conferido por simulação: ν = 0,3, h = 4 dá ARL₀ ≈ 764 passos (T11: 773), acima de e^{(1+ν/μ)h} = 159 e muito acima de e^h = 55.'],
+    ['C9 · score S congelado quando q=1 e Λ < ln B_r (§12.4, §22)', 'Atualizar S em toda janela, com reforço contínuo η·max(0,ℓ).', 'v8', 'Já resolvido na v8 (C22): S decai em toda janela e o reforço δ⁺ é aditivo; a variante contínua S ← min(1, S e^{−λΔt} + η max(0,ℓ)) é admitida como regra de interface. O painel usa essa variante e deixa claro que S não substitui CUSUM nem portão por valor.'],
+    ['C10 · LRA a 130–230 Hz lido a 100 Hz (§5.1, §6.2, §20.1)', 'Chamava de “aliasing” e propunha isolar a impedância da preensão por H⁻¹ − H_ref⁻¹.', 'fix', 'Aceito com correção: o MEMS filtra antes de amostrar (um passa-baixas de 4ª ordem em 40 Hz deixa −50 dB da portadora de 170 Hz), logo o que chega é o envelope do pulso e o recuo postural, não um alias previsível; o documento ainda oscilava na banda do LRA (80–230 / 150–200 Hz; o v9 usa 130–230 Hz). A Prop. 8 do v9 entra com condições: chassi rígido na banda, força calibrada, f_s ≥ 400 Hz e referência em suspensão livre (free-free), não sobre superfície.'],
+    ['C11 · estimador Beta-binomial (eq. 87)', 'Demonstração de 3 linhas e truncamento positivo de τ̂².', 'ok', 'Aceito: τ̂²₊ = max(ε_τ, ·), n̂₀ = max(ε_n, ·), mantendo a,b > 0 em amostra finita.'],
+    ['C12 · “carros flutuantes”, classes vazias da Fig. 8, sinal de m̂_emp em H5', 'Correções tipográficas e de definição.', 'ok', 'Aceitos: “corpos flutuantes (floats)”; as cinco classes omitidas da Figura 8 tinham contagem zero; m̂_emp sem valor absoluto no numerador para que média positiva do imitador refute H5.'],
+    ['“Proposição 8” do documento · atraso sob abstenção markoviana', 'Enunciada como cota “minimax” com erro o(1).', 'fix', 'Entrou como Proposição 10 do v9, reenquadrada: é uma aproximação com erro O(1) (último passo e reflexão do CUSUM em zero), não minimax nem o(1), e superestima o atraso em 3–5 %. T9 reproduz a Tabela E.2 (10,8 e 14,2 passos) com o CUSUM partindo do estado estacionário do dono, a mesma convenção da Tabela 10 (E[D_ativo] = 7,55 passos). Conferido além do artigo: o erro é exatamente a constante p₁₀/p₀₁ = (1−q̄)/q̄ passos (identidade de Wald), o que fecha a questão O(1) × o(1) a favor do v9.'],
+    ['“Proposição 9” do documento · impedância mão–aparelho', 'Ẑ_grip = jω[H⁻¹ − H_ref⁻¹] eliminaria massa, amortecimento e rigidez do chassi.', 'fix', 'Entrou como Proposição 8 do v9, com condições explícitas: referência free-free (apoiar na mesa soma a impedância da mesa), força do LRA calibrada por amplitude/temperatura/carga e f_s ≥ 400 Hz. Na banda do LRA a preensão é dominada por amortecimento e massa aparente, não pela f_n de 8–12 Hz.'],
+    ['Pico espectral em N4 (§10.4)', '“Usar ω_pico em vez de ω_n introduz viés (1−2ζ²) em k̂”, como regra geral.', 'no', 'Rejeitado como regra geral: o pico em ω_n√(1−2ζ²) vale para o espectro de deslocamento; para velocidade angular (giroscópio) o pico coincide com ω_n e para aceleração fica em ω_n/√(1−2ζ²). O v9 mantém o ajuste paramétrico com a ressalva correta.'],
+    ['Tabela 11 (§15)', 'Pedia corrigir 3,0×10⁻⁸ e 1,55×10⁻¹⁰.', 'no', 'Rejeitado: a v8 já trazia 3,3×10⁻⁸ (= 10⁻⁶ × 3,26 %) e 1,4×10⁻¹⁰ (= 10⁻⁶ × 1,37×10⁻⁴), com P⁽²⁾_miss(60 s) = 1,35×10⁻⁴ reestimado com 4 milhões de trajetórias; aplicar a sugestão seria retrocesso.'],
+  ];
+  const TAG = { ok: ['v-ok', 'aceito e conferido'], fix: ['v-fix', 'aceito, consertado'], no: ['v-no', 'rejeitado'], v8: ['v-v8', 'já estava na v8'] };
+  $('#dc-table tbody').innerHTML = VERDICTS.map(([it, ask, v, why]) => `<tr><td><b>${it}</b></td><td class="small">${ask}</td><td><span class="verdict-tag ${TAG[v][0]}">${TAG[v][1]}</span></td><td class="small">${why}</td></tr>`).join('');
+  $('#dc-old').innerHTML = `
+    <div class="steps">
+      <div class="step"><div class="b"><b>Escore de identidade.</b> O antigo usava impostor gaussiano centrado no próprio dono (μ_I = μ_u, σ_I = 3σ_u, isto é c = 9), que a §11.3 condena: qualquer impostor a menos de 1,57 σ_u ganha LLR positivo. Agora f_I é um prior de população declarado ou uma segunda pessoa medida, o d′ efetivo é mostrado e o LLR só é cortado por cima.</div></div>
+      <div class="step"><div class="b"><b>Sonda háptica.</b> A legenda prometia f_n e ζ da mão por um pulso de LRA; o código nunca olhava a portadora de 165 Hz: ajustava um ring-down de 2,5–9 Hz que só existia porque o torque simulado tinha componente contínua não física. Agora o painel mostra só o envelope a 60 Hz e remete à Prop. 8 (f_s ≥ 400 Hz, free-free).</div></div>
+      <div class="step"><div class="b"><b>Taxa de amostragem.</b> O antigo era um simulador puro com f_s = 100 Hz fixo em sete pontos (bandas espectrais, lags, janelas) e sem nenhuma leitura de sensor. Agora há modo com DeviceMotion real: f_s é medida pela mediana de Δt (≈ 60 Hz em navegadores) e a janela W = 4·f_s se ajusta.</div></div>
+      <div class="step"><div class="b"><b>Score e renovações.</b> S(t) somava ℓ a cada 0,64 s com divisores arbitrários (h e 4) e o SPRT tinha um único limiar fixo em ln 10⁶ sem reinício, enquanto a interface anunciava orçamento α_r e rejeição em −4,6 que não existiam. Agora S decai em toda janela (C9), cada renovação usa α_r = 6α/(π²r²) com limiar ln B_r e rejeição em ln A (§9.3), com o orçamento visível.</div></div>
+      <div class="step"><div class="b"><b>Coerência toque–inércia (H9).</b> O antigo somava −3,4 nats a Λ, C e φ por toque “incoerente” com constantes afirmadas (ε = 3 %, ρ = 90 %) e um estatístico que misturava m/s² com rad/s; sob o próprio template isso punia o dono em ≈30 % da deriva genuína enquanto digitava. Agora H9 é um contador de coerência exibido, não evidência, até ser calibrado em campo.</div></div>
+      <div class="step"><div class="b"><b>Gating.</b> Só estatísticas de captura (amostras, lacunas, saturação, movimento, orientação) decidem q_k; o valor de ℓ nunca entra (C6). O interruptor “erro C6” mostra por que isso importa.</div></div>
+      <div class="step"><div class="b"><b>Dependência entre janelas.</b> Janelas de 4 s com 50 % de sobreposição são deflacionadas por V = 2 (Prop. 6) e ρ̂₁ é exibido; no simulador há deflação e branqueamento (Prop. 9).</div></div>
+      <div class="step"><div class="b"><b>Cena 3D.</b> O antigo dependia de Three.js (≈ 1 MB). Agora uma cena leve em canvas 2D mostra aparelho, eixos do corpo, mundo ENU, g, ω e a_lin, com orientação por Madgwick (eq. 19) nos sensores reais; abre offline, sem WebGL.</div></div>
+      <div class="step"><div class="b"><b>Coleta de campo.</b> Nova aba Coletar grava o DeviceMotion bruto com rótulos, posturas, marcadores e lacunas, guarda em IndexedDB e exporta CSV/JSON pelo menu de compartilhar do iPhone.</div></div>
+    </div>`;
+  $('#dc-how').innerHTML = `
+    <div class="steps">
+      <div class="step"><div class="b"><b>Cada 2 s uma janela vira evidência ℓ_k</b> (razão de log-verossimilhança dono/impostor). Positivo favorece o dono. No simulador, ℓ ~ N(±μ, 2μ) com μ = d′²/2.</div></div>
+      <div class="step"><div class="b"><b>Λ (SPRT)</b> soma ℓ. Ao cruzar ln B_r a confiança é renovada e uma fatia α_r do orçamento de 10⁻⁶ é gasta (Ville, Prop. 1). Se cai a ln A = −4,6, a §22(h) manda revogar; este painel pede step-up (e zera Λ se aprovado), porque com ≈90 renovações/h e β = 1 % a revogação direta custaria ≈0,33 expulsões/h ao dono, três vezes a FAPH do CUSUM. Depois de uma troca, Λ herdado do dono mascara o impostor: por isso existe o CUSUM.</div></div>
+      <div class="step"><div class="b"><b>C (CUSUM)</b> acumula só evidência negativa: C = max(0, C − ℓ − ν). C &gt; h = 8 dispara step-up; o dono vê ≈ 0,12 falsos alarmes por hora e a troca é detectada em ≈ 15 s (Tabela 10).</div></div>
+      <div class="step"><div class="b"><b>φ (Shiryaev)</b> é a razão de chances de a troca já ter ocorrido. A ação executa se φ &lt; c_u/[L(1−FAR_u)]: R$ 50 tolera φ até 2×10⁻², TED de R$ 50 mil só até 2×10⁻⁵ (Prop. 5). É isto que protege a troca rápida (T_a = 10 s) onde a janela fixa falha (Tabela 12).</div></div>
+      <div class="step"><div class="b"><b>S (score)</b> é regra de interface: decai com o tempo (meia-vida 60 s) e sobe com evidência positiva; na prática só cai abaixo de S_min após ≈1 min de abstenção contínua. Não substitui C nem φ.</div></div>
+      <div class="step"><div class="b"><b>Abstenção (q = 0)</b> congela Λ e C e deixa φ acumular prior (e^{−ℓ} = 1); dilata o atraso por ≈ 1/q̄ (Prop. 10) mas nunca é decidida pelo valor de ℓ.</div></div>
+      <div class="step"><div class="b"><b>Robustez.</b> Imitação m reduz a deriva do impostor (cota vira α^{1−m}); titular “cabra” κ perde evidência média e sofre 33× mais fricção; correlação ρ exige deflação (V) ou branqueamento, senão o falso alarme sobe 15–47× (Tabela 13).</div></div>
+      <div class="step"><div class="b"><b>Composição.</b> A camada só pode exigir step-up, nunca dispensar o fator forte: por isso nunca é menos segura que o Face ID sozinho (Prop. 7) e reduz a perda pós-login em até quatro ordens de grandeza no modelo.</div></div>
+    </div>`;
+
+  /* ---------- redraw / init ---------- */
+  function redrawAll() { if (currentTab === 'collect') clSignals(); if (currentTab === 'live') liveRender(); if (currentTab === 'sensor') { snRender(); snRenderSignals(); } }
+  window.addEventListener('resize', () => requestAnimationFrame(redrawAll));
+  buildControls(); liveReset(); liveTimer();
+  ['#lv-badge', '#sn-badge', '#ts-summary', '#lv-stepup', '#sn-stepup', '#cl-state'].forEach(id => $(id).setAttribute('aria-live', 'polite'));
+  $$('canvas.chart').forEach(c => { c.setAttribute('role', 'img'); c.setAttribute('aria-label', (c.previousElementSibling && c.previousElementSibling.textContent || 'gráfico').trim().slice(0, 120)); });
+  snSupport(); snButtons(); snRender();
+  clInit();
+  let savedTab = 'collect'; try { savedTab = localStorage.getItem('painel_tab') || 'collect'; } catch {}
+  showTab(savedTab);
+})();
+
+</script>
+</body>
+</html>
