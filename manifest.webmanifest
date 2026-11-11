@@ -1,0 +1,20 @@
+{
+  "name": "IMU Auth · Coleta e Painel v9",
+  "short_name": "IMU Auth",
+  "description": "Coleta de dados inerciais no iPhone e painel interativo do preprint v9: SPRT, CUSUM, posterior de Shiryaev, portão por valor e 12 testes Monte Carlo.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090d12",
+  "theme_color": "#0d9488",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230d9488'/%3E%3Crect x='176' y='96' width='160' height='320' rx='40' fill='none' stroke='white' stroke-width='28'/%3E%3Cpath d='M64 320h64l32-64 48 128 32-80h208' fill='none' stroke='white' stroke-width='22' stroke-linecap='round' stroke-linejoin='round' opacity='.9'/%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
