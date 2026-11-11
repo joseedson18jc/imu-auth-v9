@@ -115,15 +115,16 @@ nav.tabs button[aria-selected="true"]::after{content:"";position:absolute;inset:
 nav.tabs button[data-tab="collect"][aria-selected="true"] svg .fill{fill:var(--rec)}
 
 .wrap{max-width:1120px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom));display:grid;gap:14px}
-.tabpanel{display:grid;gap:14px;animation:fade .22s var(--ease)}
+.tabpanel{display:grid;gap:14px;animation:fade .22s var(--ease);min-width:0;max-width:100%;overflow-x:clip}
+.tabpanel[hidden]{display:none!important}
 @keyframes fade{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* ---------- surfaces ---------- */
-.card{background:var(--panel);border:.5px solid var(--line2);border-radius:var(--r-l);padding:16px 18px;box-shadow:var(--shadow-1);min-width:0}
-.grid{display:grid;gap:12px}
-.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
-.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
-.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}
+.card{background:var(--panel);border:.5px solid var(--line2);border-radius:var(--r-l);padding:16px 18px;box-shadow:var(--shadow-1);min-width:0;max-width:100%;overflow:hidden}
+.grid{display:grid;gap:12px;min-width:0;max-width:100%}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
 .status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .spacer{flex:1}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
@@ -206,13 +207,29 @@ details.sub-fold>summary::-webkit-details-marker{display:none}
 details.sub-fold>summary::after{content:"▾";color:var(--muted);font-size:.8rem;transition:transform .2s var(--ease)}
 details.sub-fold[open]>summary::after{transform:rotate(180deg)}
 
-/* ---------- charts ---------- */
-canvas.chart{width:100%;height:146px;display:block;border-radius:var(--r-s);background:var(--panel2);border:.5px solid var(--line2)}
-canvas.chart.scene{height:300px;touch-action:none;cursor:grab;background:radial-gradient(ellipse at 50% 25%,var(--panel),var(--panel2))}
+/* ---------- charts & interactive diagrams ---------- */
+canvas.chart{width:100%;height:152px;display:block;border-radius:var(--r-s);background:var(--panel2);border:.5px solid var(--line2);touch-action:pan-y}
+canvas.chart.scene{height:310px;touch-action:none;cursor:grab;background:radial-gradient(ellipse at 50% 22%,var(--panel),var(--panel2))}
 canvas.chart.scene:active{cursor:grabbing}
+canvas.chart.tall{height:196px}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);margin:10px 0 5px;align-items:center}
 .legend:first-of-type{margin-top:4px}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:2.5px;margin-right:5px;vertical-align:-1px}
+.tl-wrap{margin-top:10px;padding:10px 12px;border-radius:var(--r-s);background:var(--panel2);border:.5px solid var(--line2);display:grid;gap:6px}
+.tl-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:.74rem;color:var(--muted)}
+.tl-bar{position:relative;height:14px;border-radius:99px;background:var(--bg2);overflow:hidden;display:flex;border:.5px solid var(--line2)}
+.tl-seg{height:100%;transition:width .2s var(--ease)}
+.tl-seg.owner{background:var(--good)}.tl-seg.other{background:var(--bad)}.tl-seg.table{background:var(--muted);opacity:.45}
+.tl-pin{position:absolute;top:-1px;bottom:-1px;width:2.5px;border-radius:2px;background:var(--fg);box-shadow:0 0 0 1px var(--panel)}
+.tl-pin.gap{background:var(--warn)}
+.diag-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:stretch}
+.diag-pane{background:var(--panel2);border:.5px solid var(--line2);border-radius:var(--r-m);padding:12px;display:grid;gap:8px;align-content:start;min-width:0}
+.diag-pane h3{margin:0;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.flow-svg,.fig-svg{width:100%;height:auto;display:block;border-radius:var(--r-s);background:var(--panel);border:.5px solid var(--line)}
+.fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;margin-top:10px}
+.fig-box{background:var(--panel2);border:.5px solid var(--line2);border-radius:var(--r-m);padding:13px;display:grid;gap:8px;align-content:start;min-width:0}
+.fig-box h3{margin:0;color:var(--fg);font-size:.82rem;text-transform:none;letter-spacing:-.01em;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fig-cap{font-size:.77rem;color:var(--muted);line-height:1.42;margin:0}
 
 /* ---------- log ---------- */
 .log{list-style:none;margin:0;padding:0;font-size:.82rem;max-height:220px;overflow:auto;display:grid;gap:2px;-webkit-overflow-scrolling:touch}
@@ -276,9 +293,12 @@ footer{color:var(--muted);font-size:.75rem;text-align:center;padding:6px 8px 0;l
 .recitem .ttl{font-weight:650;font-size:.9rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .recitem .meta{grid-column:1/2;font-size:.76rem;color:var(--muted);font-family:var(--mono)}
 .recitem .acts{grid-column:2/3;grid-row:1/3;display:flex;gap:6px}
-dialog{border:0;padding:0;background:transparent;color:var(--fg);max-width:min(440px,calc(100vw - 24px));width:100%}
+dialog{border:0;padding:0;background:transparent;color:var(--fg);max-width:min(440px,calc(100vw - 24px));width:100%;opacity:0;transition-property:opacity,transform,display,overlay;transition-duration:.24s;transition-timing-function:var(--ease);transition-behavior:allow-discrete}
 dialog:modal{overscroll-behavior:contain}
-dialog::backdrop{background:rgba(5,10,18,.52);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:hidden;overscroll-behavior:contain}
+dialog[open]{opacity:1;@starting-style{opacity:0}@media (prefers-reduced-motion:no-preference){transform:scale(1);@starting-style{transform:scale(.95)}}}
+@media (prefers-reduced-motion:no-preference){dialog{transform:scale(.95)}}
+dialog::backdrop{background:rgba(5,10,18,0);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:hidden;overscroll-behavior:contain;transition-property:background-color,display,overlay;transition-duration:.24s;transition-timing-function:var(--ease);transition-behavior:allow-discrete}
+dialog[open]::backdrop{background:rgba(5,10,18,.52);@starting-style{background:rgba(5,10,18,0)}}
 .sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:var(--r-l);padding:18px;box-shadow:var(--shadow-2)}
 .stack{display:grid;gap:8px;margin-top:14px}
 .stack .btn{min-height:var(--tap);width:100%}
@@ -288,8 +308,8 @@ dialog::backdrop{background:rgba(5,10,18,.52);-webkit-backdrop-filter:blur(8px);
 .helpbtn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .helpbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)}
-.guide-sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:24px;padding:20px 20px 18px;box-shadow:var(--shadow-2);display:grid;gap:14px;max-height:min(88dvh,740px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.guide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.guide-sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:24px;padding:20px 20px 18px;box-shadow:var(--shadow-2);display:grid;gap:14px;max-height:min(88dvh,740px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:relative}
+.guide-head{position:sticky;top:-20px;z-index:20;background:color-mix(in srgb,var(--panel) 84%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);margin:-20px -20px 0;padding:18px 20px 12px;border-bottom:.5px solid var(--line2);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .guide-head .kicker{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px;margin-bottom:6px}
 .guide-head h2{font:700 1.18rem/1.2 var(--display);margin:0;letter-spacing:-.02em}
 .guide-close{flex:0 0 32px;width:32px;height:32px;border-radius:50%;border:.5px solid var(--line2);background:var(--panel2);color:var(--muted);display:grid;place-items:center;cursor:pointer;font-size:1rem;line-height:1;padding:0;touch-action:manipulation}
@@ -318,7 +338,7 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
 .guide-pill strong{font:700 .86rem var(--mono);color:var(--fg);display:flex;align-items:center;gap:6px}
 .guide-pill strong i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .guide-pill small{font-size:.76rem;color:var(--muted);line-height:1.36}
-.guide-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:8px;border-top:.5px solid var(--line2);flex-wrap:wrap}
+.guide-foot{position:sticky;bottom:-18px;z-index:20;background:color-mix(in srgb,var(--panel) 84%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);margin:0 -20px -18px;padding:12px 20px 18px;border-top:.5px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .guide-dots{display:inline-flex;gap:6px;align-items:center}
 .guide-dots i{width:7px;height:7px;border-radius:999px;background:var(--line2);transition:all .2s var(--ease)}
 .guide-dots i.on{width:18px;background:var(--accent)}
@@ -342,8 +362,10 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
   .card{padding:14px;border-radius:18px}
   .metric{padding:10px 11px}.metric .v{font-size:1.08rem}
   .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  canvas.chart{height:128px}
-  canvas.chart.scene{height:260px}
+  canvas.chart{height:132px}
+  canvas.chart.scene{height:268px}
+  canvas.chart.tall{height:172px}
+  .diag-split{grid-template-columns:1fr}
   .btn{min-height:42px}
   .btn.sm{min-height:36px}
   .actionsrow .btn,.toolbar>.btn{flex:1 1 auto}
@@ -352,11 +374,17 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
   .recitem .acts{grid-column:1;grid-row:auto;margin-top:6px}
   .recitem .acts .btn{flex:1}
   dialog{margin:auto auto 0;max-width:100vw}
-  dialog.guide{max-width:100vw;max-height:92dvh}
+  dialog.guide{max-width:100vw;max-height:92dvh;width:100vw;margin:auto auto 0}
   .sheet,.guide-sheet{border-radius:22px 22px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
-  .guide-sheet{max-height:92dvh;padding:18px 15px calc(18px + env(safe-area-inset-bottom))}
+  .guide-sheet{max-height:92dvh;height:92dvh;padding:18px 15px calc(18px + env(safe-area-inset-bottom));overflow-y:auto}
+  .guide-head{top:-18px;margin:-18px -15px 0;padding:14px 15px 10px}
+  .guide-foot{bottom:calc(-18px - env(safe-area-inset-bottom));margin:0 -15px calc(-18px - env(safe-area-inset-bottom));padding:10px 15px calc(14px + env(safe-area-inset-bottom))}
   .guide-pills{grid-template-columns:1fr}
   .helpbtn{padding:4px 9px;font-size:.73rem}
+  .grid.g2,.grid.g3,.grid.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));min-width:0;max-width:100%}
+  .toolbar,.actionsrow,.status,.row,.steps,.step{min-width:0;max-width:100%}
+  .seg{max-width:100%;flex-wrap:wrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .seg button{padding:5px 8px;font-size:.74rem;min-height:30px}
 }
 @container (width < 700px){
   #dc-table thead,#ts-table thead{display:none}
@@ -442,6 +470,11 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
     </div>
     <div class="legend"><span><i style="background:var(--info)"></i>|a_lin| m/s²</span><span><i style="background:var(--warn)"></i>|ω| rad/s</span><span class="mono" id="cl-sig-note"></span></div>
     <canvas class="chart" id="cl-c0" style="height:110px"></canvas>
+    <div class="tl-wrap" id="cl-tl-wrap">
+      <div class="tl-head"><span><b>Linha do tempo de posse</b> · protocolo §23</span><span class="mono" id="cl-tl-txt">titular 100 %</span></div>
+      <div class="tl-bar" id="cl-tl-bar" role="img" aria-label="Proporção de posse na gravação"><div class="tl-seg owner" style="width:100%"></div></div>
+      <div class="legend" style="margin:2px 0 0"><span><i style="background:var(--good)"></i>Titular</span><span><i style="background:var(--bad)"></i>Outra pessoa</span><span><i style="background:var(--muted)"></i>Apoiado</span><span><i style="background:var(--fg)"></i>Marcador</span><span><i style="background:var(--warn)"></i>Lacuna</span></div>
+    </div>
     <ul class="log compact" id="cl-events" aria-label="Eventos da gravação"></ul>
   </div>
 
@@ -474,7 +507,7 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
     </ol>
   </details>
 
-  <dialog id="cl-dialog" aria-labelledby="cl-dtitle">
+  <dialog id="cl-dialog" closedby="any" aria-labelledby="cl-dtitle">
     <form method="dialog" class="sheet">
       <h2 id="cl-dtitle">Exportar</h2>
       <p class="small muted" id="cl-dinfo">preparando…</p>
@@ -546,15 +579,18 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
         <label class="toggle"><input type="checkbox" data-l="ghat" checked> ĝ</label>
         <label class="toggle"><input type="checkbox" data-l="omega" checked> ω</label>
         <label class="toggle"><input type="checkbox" data-l="alin" checked> a_lin</label>
+        <label class="toggle"><input type="checkbox" data-l="trail" checked> rastro 3D (z_B)</label>
       </div>
     </details>
   </div>
 
   <div class="grid g2">
     <div class="card">
-      <h2>Sinais e gating <small class="muted">§7: só estatísticas de captura</small></h2>
+      <h2>Sinais, espectro e gating <small class="muted">§6–§7: periodograma Hann + captura</small></h2>
       <div class="legend"><span><i style="background:var(--info)"></i>|a_lin| (m/s²)</span><span><i style="background:var(--warn)"></i>|ω| (rad/s)</span></div>
       <canvas class="chart" id="sn-c0"></canvas>
+      <div class="legend"><span><i style="background:var(--accent)"></i>PSD P_ω(f) (rad²/s²/Hz)</span><span><i style="background:var(--good)"></i>0,5–4 Hz voluntária</span><span><i style="background:var(--violet)"></i>4–12 Hz tremor</span></div>
+      <canvas class="chart" id="sn-spec" style="height:122px"></canvas>
       <div class="row" id="sn-gate" style="margin-top:8px"></div>
       <details class="sub-fold"><summary>Features da última janela</summary><dl class="kv" id="sn-feat"></dl></details>
     </div>
@@ -562,8 +598,10 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
       <h2>Modelo de evidência</h2>
       <dl class="kv" id="sn-model"></dl>
       <label class="toggle" style="margin-top:10px"><input type="checkbox" id="sn-tremor"> incluir tremor bruto (não normalizado; §10.4 mostra que é pior que inútil)</label>
-      <div class="legend" style="margin-top:8px">separabilidade d′ por feature</div>
-      <canvas class="chart" id="sn-cd" style="height:120px"></canvas>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--accent)"></i>separabilidade d′ por feature</span></div>
+      <canvas class="chart" id="sn-cd" style="height:118px"></canvas>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--good)"></i>|z_u| ao titular (menor = mais próximo)</span><span><i style="background:var(--bad)"></i>|z_I| ao prior/coorte</span></div>
+      <canvas class="chart" id="sn-zchart" style="height:118px"></canvas>
     </div>
   </div>
 
@@ -626,13 +664,29 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
   </div>
 
   <div class="card">
-    <h2>Evidência · últimos 2 minutos</h2>
-    <div class="legend"><span><i style="background:var(--good)"></i>ℓ_k &gt; 0 (dono)</span><span><i style="background:var(--bad)"></i>ℓ_k &lt; 0</span><span><i style="background:var(--info)"></i>Λ e ln B_r</span><span><i style="background:var(--muted)"></i>abstida</span></div>
+    <h2>Evidência · últimos 2 minutos <small class="muted">toque ou passe o cursor para inspecionar cada passo</small></h2>
+    <div class="legend"><span><i style="background:var(--good)"></i>ℓ_k &gt; 0 (dono)</span><span><i style="background:var(--bad)"></i>ℓ_k &lt; 0</span><span><i style="background:var(--info)"></i>Λ e ln B_r</span><span><i style="background:var(--muted)"></i>abstida</span><span><i style="background:var(--bad-soft);border:1px solid var(--bad)"></i>faixa impostor</span></div>
     <canvas class="chart" id="lv-c1"></canvas>
     <div class="legend"><span><i style="background:var(--warn)"></i>C (CUSUM) e limiar h</span></div>
     <canvas class="chart" id="lv-c2"></canvas>
     <div class="legend"><span><i style="background:var(--violet)"></i>log₁₀ φ (Shiryaev)</span><span>limiares: R$ 50 · 5 mil · 50 mil</span></div>
     <canvas class="chart" id="lv-c3"></canvas>
+  </div>
+
+  <div class="card" id="lv-diag-card">
+    <h2>Arquitetura Sequencial Dinâmica &amp; Espaço de Fase <small class="muted">fluxo §22 ao vivo e trajetória (Λ_k, C_k)</small></h2>
+    <div class="diag-split">
+      <div class="diag-pane">
+        <h3><span>Pipeline de Decisão (§7, §9.3, §12, §16)</span><span class="mono" id="lv-flow-step">passo 0</span></h3>
+        <svg class="flow-svg" id="lv-flow-svg" viewBox="0 0 540 230" role="img" aria-label="Diagrama dinâmico do motor sequencial IMU Auth v9"></svg>
+        <p class="fig-cap">O portão ancilar <b>q_k</b> bloqueia janelas sem movimento antes da soma; <b>Λ</b> renova a sessão (Ville), <b>C</b> detecta troca de mãos (CUSUM) e <b>φ</b> governa ações por valor (Shiryaev).</p>
+      </div>
+      <div class="diag-pane">
+        <h3><span>Retrato de Fase (Λ_k × C_k)</span><span class="mono" id="lv-phase-txt">Λ = 0,0 · C = 0,0</span></h3>
+        <canvas class="chart tall" id="lv-phase"></canvas>
+        <div class="legend" style="margin:2px 0 0"><span><i style="background:var(--good)"></i>trajetória dono</span><span><i style="background:var(--bad)"></i>trajetória impostor</span><span><i style="background:var(--info)"></i>parede ln B_r</span><span><i style="background:var(--warn)"></i>teto CUSUM h</span></div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -650,6 +704,7 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
         <label class="toggle"><input type="checkbox" data-l="ghat" checked> ĝ</label>
         <label class="toggle"><input type="checkbox" data-l="omega" checked> ω</label>
         <label class="toggle"><input type="checkbox" data-l="alin" checked> a_lin</label>
+        <label class="toggle"><input type="checkbox" data-l="trail" checked> rastro 3D (z_B)</label>
       </div>
     </details>
   </div>
@@ -673,6 +728,27 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
     <p class="small muted">Cada teste compara o valor obtido com a tabela citada, dentro do erro de Monte Carlo (≈ √(p(1−p)/N)) e do arredondamento. Roda em segundo plano no seu navegador; usa menos trajetórias que o artigo, por isso as tolerâncias são declaradas por teste.</p>
     <div class="tablewrap" tabindex="0" role="region" aria-label="Resultados dos 12 testes Monte Carlo"><table id="ts-table"><thead><tr><th>#</th><th>Teste</th><th>Referência (preprint)</th><th>Obtido</th><th>Status</th><th>ms</th></tr></thead><tbody></tbody></table></div>
   </div>
+
+  <div class="card" id="ts-viz">
+    <h2>Síntese Gráfica das Proposições e Tabelas <small class="muted">curvas analíticas do v9 + pontos empíricos de Monte Carlo</small></h2>
+    <div class="fig-grid">
+      <div class="fig-box">
+        <h3><span>Fig. T1 · Atraso E[D] do CUSUM × d′ e Imitação m</span><span class="badge info">Tab. 10 / 14a</span></h3>
+        <canvas class="chart" id="ts-c1" style="height:156px"></canvas>
+        <p class="fig-cap">Curvas de Wald E[D] ≈ Δ·h/[μ(1−m)] para m = 0 e m = 0,5. Quando T3 e T7 rodam, os valores simulados (15,1 s e 26,8 s em d′ = 1,5) são plotados sobre a curva.</p>
+      </div>
+      <div class="fig-box">
+        <h3><span>Fig. T2 · Portões de Valor (TED R$ 50 mil em T_a = 10 s)</span><span class="badge ok">Tab. 12 · T8</span></h3>
+        <canvas class="chart" id="ts-c2" style="height:156px"></canvas>
+        <p class="fig-cap">Comparação entre Portão A (só CUSUM: 69,7 % perda), Portão B (Janela fixa M=15: 52,2 % perda) e Portão C (Posterior de Shiryaev: 1,1 % perda, 28,3 % fricção).</p>
+      </div>
+      <div class="fig-box">
+        <h3><span>Fig. T3 · Erro C6 (Ville) &amp; Dependência AR(1) ρ = 0,3</span><span class="badge warn">T1 / T4 / T5 / T6</span></h3>
+        <canvas class="chart" id="ts-c3" style="height:156px"></canvas>
+        <p class="fig-cap">Esquerda (log₁₀ FA): gate ancilar (4×10⁻⁴ ≤ 10⁻³) vs gate por escore C6 (0,9997). Direita (FAPH/h): AR(1) ingênuo (1,84) vs deflação V (0,045) vs branqueamento (0,106).</p>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ============================ SOBRE ============================ -->
@@ -680,6 +756,48 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
   <div class="card">
     <h2>Como ler este painel</h2>
     <div id="dc-how"></div>
+  </div>
+
+  <div class="card" id="dc-figs">
+    <h2>Figuras e Diagramas Interativos do Preprint v9 <small class="muted">geometria cinemática, UBM vs coorte e cota MGF</small></h2>
+    <div class="fig-grid">
+      <div class="fig-box">
+        <h3><span>Fig. 1 · Referenciais (B ↔ I), Pêndulo Invertido e LRA</span><span class="badge info">§3, §4, §10.1 · C3–C5, C10</span></h3>
+        <svg class="fig-svg" id="dc-fig1-svg" viewBox="0 0 460 220" role="img" aria-label="Figura 1: Referenciais do corpo e mundo, pêndulo invertido da mão e filtragem MEMS do LRA"></svg>
+        <div class="ctrl"><label for="dc-f1-th"><span>Inclinação postural ϑ do punho</span><b id="dc-f1-th-v">25° · K_ef = 0,82 K_u</b></label><input type="range" id="dc-f1-th" min="0" max="75" step="1" value="25"></div>
+        <p class="fig-cap">Centro de massa acima do pivô reduz a rigidez efetiva: <b>K_ef = K_u − m g l_cm cos ϑ</b> (C5). À direita, o passa-baixas MEMS de 40 Hz atenua −50 dB da portadora LRA (170 Hz), deixando só o envelope a 60 Hz (C10).</p>
+      </div>
+      <div class="fig-box">
+        <h3><span>Fig. 2 · Falha do UBM Centrado (§11.3 · C2) vs. Coorte</span><span class="badge warn">r*(c,D) = √(Dc ln(c/(c−1)))</span></h3>
+        <canvas class="chart" id="dc-fig2-cv" style="height:164px"></canvas>
+        <div class="ctrl"><label for="dc-f2-c"><span>Razão de variância c = σ_I²/σ_G² (D = 10)</span><b id="dc-f2-c-v">c = 4,0 → r* = 4,33</b></label><input type="range" id="dc-f2-c" min="1.5" max="9" step="0.5" value="4"></div>
+        <p class="fig-cap">Se o impostor f_I é centrado no próprio titular (μ_I = μ_u), todo impostor com distância de Mahalanobis r &lt; r*(c,D) recebe <b>LLR positivo (ℓ &gt; 0)</b>! O v9 exige prior de população deslocado ou coorte medida.</p>
+      </div>
+      <div class="fig-box">
+        <h3><span>Fig. 3 · Partição de Ville α_r e Cota MGF (C1 · §9.4)</span><span class="badge ok">E[α^{1−m}]/α</span></h3>
+        <canvas class="chart" id="dc-fig3-cv" style="height:164px"></canvas>
+        <div class="ctrl"><label for="dc-f3-sg"><span>Dispersão de imitação σ_m (em α = 10⁻⁶)</span><b id="dc-f3-sg-v">σ_m = 0,15 → 8,56α / 8,90α / 16,8α</b></label><input type="range" id="dc-f3-sg" min="0.05" max="0.25" step="0.01" value="0.15"></div>
+        <p class="fig-cap">Multiplicador exato E[α^{1−m}]/α sob normal truncada em (−∞,1), retificada e meia-normal [0,1) em função de σ_m (§9.4, C1). Em σ_m = 0,15 reproduz <b>8,56α, 8,90α e 16,8α</b> (Teste T10).</p>
+      </div>
+      <div class="fig-box" id="dc-box-fig4">
+        <h3><span>Fig. 4 · Máquina de Estados da Sessão Sequencial</span><span class="badge info">§7, §9.3, §16, §22</span></h3>
+        <svg class="fig-svg" id="dc-fig4-svg" viewBox="0 0 540 220" role="img" aria-label="Figura 4: Máquina de estados da sessão do IMU Auth v9"></svg>
+        <div id="dc-fig4-detail" class="note info" style="margin:4px 0 0;font-size:.78rem;line-height:1.45">Toque em qualquer estado ou transição para inspecionar as equações governantes do preprint.</div>
+        <p class="fig-cap">Fluxo formal da sessão: o portão <b>q_k</b> (§7) filtra janelas passivas. O titular renova a sessão em <b>ln B_r</b> (Ville, §9.3). Suspeita pós-troca acumula em <b>C_k</b> (CUSUM); se <b>C_k &gt; h = 8,0</b> ou valor exige <b>φ &gt; φ*</b> (§16), entra em <b>Step-Up</b>.</p>
+      </div>
+      <div class="fig-box" id="dc-box-fig5">
+        <h3><span>Fig. 5 · Paradoxo de Martingale e Portão Ancilar (Regra C6)</span><span class="badge warn">§7, §9.3 · T4</span></h3>
+        <canvas class="chart" id="dc-fig5-cv" style="height:164px"></canvas>
+        <div class="ctrl"><label for="dc-f5-gate"><span>Regime de filtragem de janelas</span><b id="dc-f5-gate-v">Portão Ancilar q_k (v9) → FA = 3,9×10⁻⁴</b></label>
+          <select id="dc-f5-gate">
+            <option value="ancilar" selected>Portão Ancilar Físico q_k (§7, v9) — Supermartingale íntegro</option>
+            <option value="score_05">Violação C6: descarte por escore ℓ &lt; −0,5 — Colapso (99,98%)</option>
+            <option value="score_00">Violação C6: descarte por escore ℓ &lt; 0 — Colapso Total (100%)</option>
+          </select>
+        </div>
+        <p class="fig-cap">Se o sistema descartar janelas com ℓ &lt; −0,5 achando que "elimina ruído", a média sob impostor vira positiva! A supermartingale de Ville é destruída e a falsa aceitação salta de <b>4×10⁻⁴ para 99,98%</b> (Teste T4).</p>
+      </div>
+    </div>
   </div>
   <details class="card fold">
     <summary><h2>Correções da auditoria × preprint v9</h2><span class="small muted">Apêndice D, conferido por cálculo</span></summary>
@@ -1185,10 +1303,22 @@ const AuthEngine = (() => {
   }
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+  function ubmRadius(c, D = 10) {
+    if (c <= 1) return 0;
+    return Math.sqrt((D * c * Math.log(c)) / (c - 1));
+  }
+  function impostorHetFactor(alpha = 1e-6, mu_m = 0, sg = 0.15) {
+    const t = -Math.log(alpha);
+    const up = c1Closed(t, sg, -40, 1);
+    const half = c1Closed(t, sg, 0, 1);
+    const rect = 0.5 * 1 + 0.5 * half;
+    return { trunc: up, rect, half };
+  }
+
   return {
     DELTA, ALPHA_SESS, BETA, LN_FACEID, defaults, makeRng, makeSource, makeGate,
     alphaR, lnB, lnA, phiThreshold, lambdaStar, newSession, stepSession, resolveStepUp, revoke, strongFactor, handoff, decideAction,
-    Phi, c1Closed, c1Numeric, lag1Autocorr, fmtSci,
+    Phi, c1Closed, c1Numeric, lag1Autocorr, fmtSci, ubmRadius, impostorHetFactor,
     mcCusumDelay, mcFAPH, mcARL0, mcParity, mcVille, mcValueGates, mcMarkovDelay, mcWhitenMoments,
     TESTS, runTests,
   };
@@ -1238,14 +1368,54 @@ const View3D = (() => {
 
   /* ---------- cena ---------- */
   function makeScene(canvas) {
-    const st = { yaw: -0.65, pitch: 0.42, dist: 0.55, layers: { body: true, world: true, g: true, ghat: true, omega: true, alin: true, ghost: false }, drag: null, last: null };
-    const onDown = e => { st.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: st.yaw, pitch: st.pitch }; canvas.style.cursor = 'grabbing'; try { if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId); } catch {} };
-    const onMove = e => { if (!st.drag || (st.drag.id != null && e.pointerId !== st.drag.id)) return; st.yaw = st.drag.yaw + (e.clientX - st.drag.x) * 0.01; st.pitch = Math.max(-1.4, Math.min(1.4, st.drag.pitch + (e.clientY - st.drag.y) * 0.01)); if (st.last) draw(canvas, st, st.last); };
-    const onUp = e => { if (st.drag && st.drag.id != null) { try { if (canvas.releasePointerCapture) canvas.releasePointerCapture(st.drag.id); } catch {} } st.drag = null; canvas.style.cursor = 'grab'; };
+    const st = { yaw: -0.65, pitch: 0.42, dist: 0.55, layers: { body: true, world: true, g: true, ghat: true, omega: true, alin: true, trail: true }, trail: [], ripples: [], drag: null, last: null };
+    let downPos = null;
+    const triggerRipple = (u = 0, v = -0.15) => {
+      st.ripples.push({ u, v, t0: (typeof performance !== 'undefined' ? performance.now() : Date.now()) });
+      if (st.last) draw(canvas, st, st.last);
+    };
+    const onDown = e => {
+      downPos = { x: e.clientX, y: e.clientY, t: (typeof performance !== 'undefined' ? performance.now() : Date.now()) };
+      st.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: st.yaw, pitch: st.pitch };
+      canvas.style.cursor = 'grabbing';
+      try { if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId); } catch {}
+    };
+    const onMove = e => {
+      if (!st.drag || (st.drag.id != null && e.pointerId !== st.drag.id)) return;
+      st.yaw = st.drag.yaw + (e.clientX - st.drag.x) * 0.01;
+      st.pitch = Math.max(-1.4, Math.min(1.4, st.drag.pitch + (e.clientY - st.drag.y) * 0.01));
+      if (st.last) draw(canvas, st, st.last);
+    };
+    const onUp = e => {
+      if (downPos && Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) < 6 && ((typeof performance !== 'undefined' ? performance.now() : Date.now()) - downPos.t) < 320) {
+        triggerRipple(0, -0.15);
+      }
+      downPos = null;
+      if (st.drag && st.drag.id != null) { try { if (canvas.releasePointerCapture) canvas.releasePointerCapture(st.drag.id); } catch {} }
+      st.drag = null; canvas.style.cursor = 'grab';
+    };
     canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove); canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onUp);
+    canvas.addEventListener('dblclick', () => { st.yaw = -0.65; st.pitch = 0.42; st.dist = 0.55; if (st.last) draw(canvas, st, st.last); });
     canvas.style.touchAction = 'none';
     canvas.style.cursor = 'grab';
-    return { st, render(state) { st.last = state; draw(canvas, st, state); }, preset(name) { const p = { tq: [-0.65, 0.42], user: [0, 0.05], side: [-1.5708, 0.02], top: [0, 1.4] }[name]; if (p) { st.yaw = p[0]; st.pitch = p[1]; if (st.last) draw(canvas, st, st.last); } }, toggle(k, v) { st.layers[k] = v; if (st.last) draw(canvas, st, st.last); } };
+    return {
+      st,
+      triggerRipple,
+      render(state) {
+        st.last = state;
+        if (state && state.q) {
+          const tip = rot(state.q, [0, 0, 0.11]);
+          const prev = st.trail[st.trail.length - 1];
+          if (!prev || Math.hypot(tip[0] - prev[0], tip[1] - prev[1], tip[2] - prev[2]) > 0.0012) {
+            st.trail.push(tip);
+            if (st.trail.length > 42) st.trail.shift();
+          }
+        }
+        draw(canvas, st, state);
+      },
+      preset(name) { const p = { tq: [-0.65, 0.42], user: [0, 0.05], side: [-1.5708, 0.02], top: [0, 1.4] }[name]; if (p) { st.yaw = p[0]; st.pitch = p[1]; if (st.last) draw(canvas, st, st.last); } },
+      toggle(k, v) { st.layers[k] = v; if (st.last) draw(canvas, st, st.last); },
+    };
   }
 
   function draw(cv, st, S) {
@@ -1263,42 +1433,133 @@ const View3D = (() => {
     const proj = v => { const s = f / (st.dist + v[1]); return [cx + v[0] * s, cyy - v[2] * s, s]; };
     const P = p => proj(view(p));
     const world = pb => rot(q, pb);
-    // chão (grade no plano z = −0.11)
+    const dark = css.getPropertyValue('color-scheme').trim() === 'dark';
+    // chão (grade no plano z = −0.11) + sombra projetada do aparelho
     ctx.lineWidth = 1; ctx.strokeStyle = C.line;
     for (let i = -4; i <= 4; i++) { const a = P([i * 0.05, -0.2, -0.11]), b = P([i * 0.05, 0.2, -0.11]), c = P([-0.2, i * 0.05, -0.11]), d = P([0.2, i * 0.05, -0.11]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.moveTo(c[0], c[1]); ctx.lineTo(d[0], d[1]); ctx.stroke(); }
-    // caixa do aparelho (corpo), faces com pintor
     const hx = W / 2, hy = H / 2, hz = D / 2;
+    const shCorners = [[-hx, -hy, 0], [hx, -hy, 0], [hx, hy, 0], [-hx, hy, 0]].map(world).map(p => P([p[0], p[1], -0.109]));
+    ctx.beginPath(); shCorners.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+    ctx.fillStyle = dark ? 'rgba(0,0,0,0.34)' : 'rgba(15,23,36,0.09)'; ctx.fill();
+    // caixa do aparelho (corpo), faces com pintor
     const V = [[-hx, -hy, -hz], [hx, -hy, -hz], [hx, hy, -hz], [-hx, hy, -hz], [-hx, -hy, hz], [hx, -hy, hz], [hx, hy, hz], [-hx, hy, hz]].map(world);
     const faces = [{ i: [4, 5, 6, 7], n: [0, 0, 1], screen: true }, { i: [0, 3, 2, 1], n: [0, 0, -1] }, { i: [0, 1, 5, 4], n: [0, -1, 0] }, { i: [2, 3, 7, 6], n: [0, 1, 0] }, { i: [1, 2, 6, 5], n: [1, 0, 0] }, { i: [0, 4, 7, 3], n: [-1, 0, 0] }];
     const light = [0.3, -0.6, 0.74];
     const fv = faces.map(fc => { const vs = fc.i.map(k => view(V[k])); const nW = world(fc.n); const sh = 0.55 + 0.45 * Math.max(0, nW[0] * light[0] + nW[1] * light[1] + nW[2] * light[2]); return { ...fc, vs, depth: vs.reduce((a, v) => a + v[1], 0) / 4, sh }; }).sort((a, b) => b.depth - a.depth);
-    const dark = css.getPropertyValue('color-scheme').trim() === 'dark';
     for (const fc of fv) {
       const ps = fc.vs.map(proj); ctx.beginPath(); ps.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
-      const base = fc.screen ? (dark ? 30 : 40) : (dark ? 90 : 160); const v = Math.round(base * fc.sh);
-      ctx.fillStyle = fc.screen ? `rgb(${v},${v + 12},${v + 30})` : `rgb(${v},${v},${v})`; ctx.fill(); ctx.strokeStyle = dark ? '#5b6b7b' : '#334155'; ctx.lineWidth = 1; ctx.stroke();
-      if (fc.screen) { // moldura e ilha/câmera como pista de orientação
-        const a = world([-hx * 0.8, -hy * 0.9, hz + 0.0005]), b = world([hx * 0.8, -hy * 0.9, hz + 0.0005]), c = world([hx * 0.8, hy * 0.85, hz + 0.0005]), d = world([-hx * 0.8, hy * 0.85, hz + 0.0005]);
-        const pp = [a, b, c, d].map(P); ctx.beginPath(); pp.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.strokeStyle = C.screen; ctx.stroke();
-        const cam = P(world([0, hy * 0.93, hz + 0.0005])); ctx.beginPath(); ctx.arc(cam[0], cam[1], 2.5, 0, 7); ctx.fillStyle = C.screen; ctx.fill();
+      if (fc.screen) {
+        // Display OLED de alta profundidade
+        ctx.fillStyle = dark ? '#060a12' : '#0c1524';
+        ctx.fill();
+        // Reflexo de chanfro de vidro (glass bevel reflection)
+        const glassGrad = ctx.createLinearGradient(ps[0][0], ps[0][1], ps[2][0], ps[2][1]);
+        glassGrad.addColorStop(0, dark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.24)');
+        glassGrad.addColorStop(0.35, 'rgba(255,255,255,0.03)');
+        glassGrad.addColorStop(0.65, 'rgba(255,255,255,0.0)');
+        glassGrad.addColorStop(1, dark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.12)');
+        ctx.fillStyle = glassGrad;
+        ctx.fill();
+        ctx.strokeStyle = dark ? '#334155' : '#94a3b8';
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+
+        // Moldura, Dynamic Island e barra inferior como pistas de orientação
+        const a = world([-hx * 0.84, -hy * 0.91, hz + 0.0005]), b = world([hx * 0.84, -hy * 0.91, hz + 0.0005]), c = world([hx * 0.84, hy * 0.89, hz + 0.0005]), d = world([-hx * 0.84, hy * 0.89, hz + 0.0005]);
+        const pp = [a, b, c, d].map(P); ctx.beginPath(); pp.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.strokeStyle = C.screen; ctx.lineWidth = 1.15; ctx.stroke();
+        const di1 = P(world([-hx * 0.22, hy * 0.81, hz + 0.0006])), di2 = P(world([hx * 0.22, hy * 0.81, hz + 0.0006]));
+        ctx.beginPath(); ctx.moveTo(di1[0], di1[1]); ctx.lineTo(di2[0], di2[1]); ctx.strokeStyle = C.screen; ctx.lineWidth = 3.2; ctx.lineCap = 'round'; ctx.stroke();
+        const hb1 = P(world([-hx * 0.30, -hy * 0.83, hz + 0.0006])), hb2 = P(world([hx * 0.30, -hy * 0.83, hz + 0.0006]));
+        ctx.beginPath(); ctx.moveTo(hb1[0], hb1[1]); ctx.lineTo(hb2[0], hb2[1]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1.8; ctx.stroke(); ctx.lineCap = 'butt';
+
+        // Ondas de toque animadas na tela (touch-point ripples correlacionadas a H9)
+        if (st.ripples && st.ripples.length) {
+          const nowTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+          st.ripples = st.ripples.filter(r => (nowTime - r.t0) < 650);
+          for (const r of st.ripples) {
+            const prog = (nowTime - r.t0) / 650;
+            const rP = P(world([r.u * hx * 0.7, r.v * hy * 0.7, hz + 0.001]));
+            const ripR = (6 + prog * 40) * (f / 350);
+            ctx.save();
+            ctx.strokeStyle = `rgba(45, 212, 191, ${(1 - prog) * 0.9})`;
+            ctx.lineWidth = 2.2 * (1 - prog);
+            ctx.beginPath(); ctx.arc(rP[0], rP[1], ripR, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = `rgba(45, 212, 191, ${(1 - prog) * 0.3})`;
+            ctx.beginPath(); ctx.arc(rP[0], rP[1], ripR * 0.45, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+          }
+        }
+      } else {
+        // Chassi metálico escovado aeroespacial (titânio) com reflexo chanfrado
+        const v = Math.round((dark ? 90 : 172) * fc.sh);
+        const mGrad = ctx.createLinearGradient(ps[0][0], ps[0][1], ps[2][0], ps[2][1]);
+        mGrad.addColorStop(0, `rgb(${Math.min(255, v + 28)},${Math.min(255, v + 30)},${Math.min(255, v + 38)})`);
+        mGrad.addColorStop(0.5, `rgb(${v},${v + 2},${v + 6})`);
+        mGrad.addColorStop(1, `rgb(${Math.max(0, v - 24)},${Math.max(0, v - 22)},${Math.max(0, v - 16)})`);
+        ctx.fillStyle = mGrad; ctx.fill();
+        ctx.strokeStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 1; ctx.stroke();
       }
+    }
+    // rastro 3D da normal z_B (micro-tremor e oscilação postural)
+    if (st.layers.trail && st.trail.length > 1) {
+      for (let i = 1; i < st.trail.length; i++) {
+        const p0 = P(st.trail[i - 1]), p1 = P(st.trail[i]);
+        ctx.strokeStyle = C.z; ctx.globalAlpha = 0.15 + 0.75 * (i / st.trail.length); ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
     }
     const arrow = (from, to, color, label, width = 2) => {
       const a = P(from), b = P(to); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       const ang = Math.atan2(b[1] - a[1], b[0] - a[0]), L = 9; ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - L * Math.cos(ang - 0.4), b[1] - L * Math.sin(ang - 0.4)); ctx.lineTo(b[0] - L * Math.cos(ang + 0.4), b[1] - L * Math.sin(ang + 0.4)); ctx.closePath(); ctx.fill();
-      if (label) { ctx.font = '600 11px ' + col('--mono'); ctx.fillText(label, b[0] + 6, b[1] - 4); }
+      if (label) {
+        ctx.font = '600 10.5px ' + col('--mono');
+        const tw = ctx.measureText(label).width + 8, tx = b[0] + 5, ty = b[1] - 14;
+        ctx.fillStyle = dark ? 'rgba(15,23,42,0.88)' : 'rgba(255,255,255,0.92)';
+        ctx.fillRect(tx, ty, tw, 15);
+        ctx.strokeStyle = color; ctx.lineWidth = 0.8;
+        ctx.strokeRect(tx, ty, tw, 15);
+        ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, tx + 4, ty + 7.5);
+      }
     };
     const Lb = 0.11, Lw = 0.08;
-    if (st.layers.world) { const o = [-0.19, 0.19, -0.11]; arrow(o, [o[0] + Lw, o[1], o[2]], C.muted, 'E'); arrow(o, [o[0], o[1] + Lw, o[2]], C.muted, 'N'); arrow(o, [o[0], o[1], o[2] + Lw], C.muted, 'z↑'); }
-    if (st.layers.body) { arrow([0, 0, 0], world([Lb, 0, 0]), C.x, 'x_B'); arrow([0, 0, 0], world([0, Lb, 0]), C.y, 'y_B'); arrow([0, 0, 0], world([0, 0, Lb]), C.z, 'z_B'); }
+    if (st.layers.world) {
+      const o = [-0.19, 0.19, -0.11], po = P(o);
+      ctx.font = '700 9px ' + col('--sans');
+      ctx.fillStyle = dark ? 'rgba(30,41,59,0.9)' : 'rgba(241,245,249,0.95)';
+      ctx.fillRect(po[0] - 22, po[1] + 8, 86, 14);
+      ctx.strokeStyle = col('--line2'); ctx.strokeRect(po[0] - 22, po[1] + 8, 86, 14);
+      ctx.fillStyle = col('--muted'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('ENU (Mundo)', po[0] + 21, po[1] + 15);
+      arrow(o, [o[0] + Lw, o[1], o[2]], '#f87171', 'E (Leste)');
+      arrow(o, [o[0], o[1] + Lw, o[2]], '#34d399', 'N (Norte)');
+      arrow(o, [o[0], o[1], o[2] + Lw], '#38bdf8', 'U (z↑ Cima)');
+    }
+    if (st.layers.body) {
+      arrow([0, 0, 0], world([Lb, 0, 0]), C.x, 'x_B (Largura)');
+      arrow([0, 0, 0], world([0, Lb, 0]), C.y, 'y_B (Comprimento)');
+      arrow([0, 0, 0], world([0, 0, Lb]), C.z, 'z_B (Normal tela)');
+    }
     if (st.layers.g) arrow([0, 0, 0], [0, 0, -0.12], C.g, 'g', 2.5);
     if (st.layers.ghat && S.ghat) { const gw = world(S.ghat); arrow([0, 0, 0], gw.map(v => v * 0.12), C.ghat, 'ĝ (reação)', 2.5); }
     if (st.layers.omega && S.omega) { const n = Math.hypot(...S.omega); if (n > 1e-4) { const sc = Math.min(0.16, 0.06 + 0.1 * Math.min(1, n / 2)); arrow([0, 0, 0], world(S.omega).map(v => v / n * sc), C.om, `ω ${n.toFixed(2)} rad/s`); } }
     if (st.layers.alin && S.alin) { const n = Math.hypot(...S.alin); if (n > 0.02) { const sc = Math.min(0.16, 0.03 + 0.12 * Math.min(1, n / 3)); arrow([0, 0, 0], world(S.alin).map(v => v / n * sc), C.al, `a_lin ${n.toFixed(2)} m/s²`); } }
+    // arco de inclinação entre +z_I e z_B
+    const zW = world([0, 0, 1]); const tilt = Math.acos(Math.max(-1, Math.min(1, zW[2]))) * 180 / Math.PI;
+    if (st.layers.body && tilt > 2) {
+      ctx.beginPath(); ctx.strokeStyle = C.ghat; ctx.setLineDash([2, 2]); ctx.lineWidth = 1.2;
+      for (let k = 0; k <= 12; k++) {
+        const u = k / 12, vx = u * zW[0], vy = u * zW[1], vz = (1 - u) + u * zW[2], vn = Math.hypot(vx, vy, vz) || 1;
+        const pt3 = P([0.075 * vx / vn, 0.075 * vy / vn, 0.075 * vz / vn]);
+        k ? ctx.lineTo(pt3[0], pt3[1]) : ctx.moveTo(pt3[0], pt3[1]);
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
     // legenda de atitude responsiva (evita corte em telas estreitas de iPhone)
     const [w0, x0, y0, z0] = q; const roll = Math.atan2(2 * (w0 * x0 + y0 * z0), 1 - 2 * (x0 * x0 + y0 * y0)), pitch = Math.asin(Math.max(-1, Math.min(1, 2 * (w0 * y0 - z0 * x0)))), yaw = Math.atan2(2 * (w0 * z0 + x0 * y0), 1 - 2 * (y0 * y0 + z0 * z0));
-    const zW = world([0, 0, 1]); const tilt = Math.acos(Math.max(-1, Math.min(1, zW[2]))) * 180 / Math.PI;
     ctx.font = '10.5px ' + col('--mono'); ctx.fillStyle = C.muted; ctx.textAlign = 'left';
     const qStr = `q_IB = [${q.map(v => v.toFixed(2)).join(', ')}]`, angStr = `φ ${(roll * 180 / Math.PI).toFixed(0)}°  θ ${(pitch * 180 / Math.PI).toFixed(0)}°  ψ ${(yaw * 180 / Math.PI).toFixed(0)}°  ·  inclinação ${tilt.toFixed(0)}°`;
     if (w < 500) {
@@ -1407,7 +1668,7 @@ const SensorLab = (() => {
     const maxA = Math.max(...win.map(s => Math.hypot(s.ax, s.ay, s.az))), maxW = Math.max(...wmag);
     const vec = [Math.log(la + 1e-4), Math.log(lw + 1e-4), Math.log(bp.p[0] + 1e-8), Math.log(bp.p[1] + 1e-8), ax, ay, az, sw, Math.log(rj + 1e-3), he];
     const tilt = Math.acos(Math.max(-1, Math.min(1, az))) * 180 / Math.PI;
-    return { vec, la, lw, pv: bp.p[0], pt: bp.p[1], ax, ay, az, sw, jerk: rj, he, maxA, maxW, n, tilt };
+    return { vec, la, lw, pv: bp.p[0], pt: bp.p[1], spec: bp.spec, df: bp.df, ax, ay, az, sw, jerk: rj, he, maxA, maxW, n, tilt };
   }
   // Gating ANCILAR: só estatísticas de captura; nunca o valor ou o sinal de ℓ (§7, C6)
   function gating(win, fs, f, extra = {}) {
@@ -1884,34 +2145,229 @@ const Recorder = (() => {
     } else { apply(); routeFocus(); }
   }
 
-  /* ---------- gráficos (canvas, sem dependências) ---------- */
+  function toRgba(c, a) {
+    if (!c) return `rgba(100,100,100,${a})`;
+    c = String(c).trim();
+    if (c.startsWith('#')) {
+      let hex = c.slice(1);
+      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      const num = parseInt(hex.slice(0, 6), 16);
+      return `rgba(${(num >> 16) & 255},${(num >> 8) & 255},${num & 255},${a})`;
+    }
+    if (c.startsWith('rgb(')) return c.replace('rgb(', 'rgba(').replace(')', `,${a})`);
+    if (c.startsWith('rgba(')) return c.replace(/,\s*[\d.]+\)$/, `,${a})`);
+    return c;
+  }
+
+  /* ---------- gráficos (canvas, sem dependências, com inspeção interativa) ---------- */
   function chart(cv, cfg) {
     if (!cv || cv.offsetParent === null) return;
+    cv._cfg = cfg;
+    if (!cv._wired) {
+      cv._wired = true;
+      const onPtr = e => {
+        const rect = cv.getBoundingClientRect();
+        cv._hx = e.clientX - rect.left;
+        if (cv._cfg) chart(cv, cv._cfg);
+      };
+      cv.addEventListener('pointermove', onPtr);
+      cv.addEventListener('pointerdown', onPtr);
+      cv.addEventListener('pointerleave', () => { cv._hx = null; if (cv._cfg) chart(cv, cv._cfg); });
+    }
     const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
     if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
     const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
-    const muted = cssVar('--muted'), line = cssVar('--line'), fg = cssVar('--fg');
-    const padL = 46, padR = 8, padT = 8, padB = 18, n = Math.max(2, cfg.n);
+    const muted = cssVar('--muted'), line = cssVar('--line'), fg = cssVar('--fg'), panel = cssVar('--panel'), bad = cssVar('--bad'), warn = cssVar('--warn');
+    const padL = 46, padR = 10, padT = 10, padB = 18, n = Math.max(2, cfg.n);
     let lo = Infinity, hi = -Infinity;
+    const hlinesList = cfg.hlines || cfg.hline || [];
+    const vlinesList = cfg.vlines || cfg.vline || [];
     for (const s of cfg.series) for (const v of s.data) if (Number.isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
-    for (const l of cfg.hlines || []) { lo = Math.min(lo, l.y); hi = Math.max(hi, l.y); }
+    for (const l of hlinesList) { lo = Math.min(lo, l.y); hi = Math.max(hi, l.y); }
     if (cfg.yMin != null) lo = Math.min(lo, cfg.yMin); if (cfg.yMax != null) hi = Math.max(hi, cfg.yMax);
     if (!Number.isFinite(lo)) { lo = 0; hi = 1; } if (hi - lo < 1e-9) hi = lo + 1;
     const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
     if (cfg.yMin != null && cfg.hardMin) lo = cfg.yMin; if (cfg.yMax != null && cfg.hardMax) hi = cfg.yMax;
     const X = i => padL + (i / (n - 1)) * (w - padL - padR), Y = v => padT + (1 - (v - lo) / (hi - lo)) * (h - padT - padB);
+
+    // faixas verticais de fundo (ex.: posse do impostor ou bandas espectrais)
+    for (const rawZ of cfg.zones || []) {
+      const z = Array.isArray(rawZ) ? rawZ : [rawZ.idx0 ?? rawZ.x0, rawZ.idx1 ?? rawZ.x1, rawZ.color];
+      const x0 = Math.max(padL, X(z[0])), x1 = Math.min(w - padR, X(z[1]));
+      if (x1 > x0) { ctx.fillStyle = z[2]; ctx.fillRect(x0, padT, x1 - x0, h - padT - padB); }
+    }
+
+    // Alerta térmico dinâmico em gráficos de CUSUM quando C se aproxima de h (eq. 9.3)
+    const cusumSeries = cfg.series.find(s => s.name === 'C');
+    const cusumH = hlinesList.find(l => l.label === 'h' || (l.label && l.label.includes('h=')));
+    let cusumAlarm = false;
+    if (cusumSeries && cusumH) {
+      const maxC = Math.max(0, ...cusumSeries.data.filter(Number.isFinite));
+      const targetH = cusumH.y;
+      if (maxC >= 0.65 * targetH) {
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 260);
+        const intensity = Math.min(1, (maxC - 0.65 * targetH) / (0.35 * targetH));
+        const alpha = (0.08 + 0.12 * pulse) * intensity;
+        const grad = ctx.createLinearGradient(0, padT, 0, Y(targetH));
+        grad.addColorStop(0, `rgba(248,113,113,${alpha * 1.6})`);
+        grad.addColorStop(1, `rgba(251,191,36,${alpha * 0.3})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(padL, padT, w - padL - padR, Math.max(0, Y(targetH) - padT));
+        if (maxC >= targetH) cusumAlarm = true;
+      }
+    }
+
     ctx.font = '10px ' + cssVar('--mono'); ctx.textBaseline = 'middle';
     const ticks = 4; ctx.strokeStyle = line; ctx.fillStyle = muted; ctx.lineWidth = 1;
-    for (let i = 0; i <= ticks; i++) { const v = lo + (hi - lo) * i / ticks, y = Y(v); ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke(); ctx.textAlign = 'right'; ctx.fillText(cfg.fmt ? cfg.fmt(v) : v.toFixed(Math.abs(hi - lo) < 5 ? 1 : 0), padL - 4, y); }
-    if (lo < 0 && hi > 0) { ctx.strokeStyle = muted; ctx.beginPath(); ctx.moveTo(padL, Y(0)); ctx.lineTo(w - padR, Y(0)); ctx.stroke(); }
-    for (const l of cfg.hlines || []) { ctx.strokeStyle = l.color; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(padL, Y(l.y)); ctx.lineTo(w - padR, Y(l.y)); ctx.stroke(); ctx.setLineDash([]); if (l.label) { ctx.fillStyle = l.color; ctx.textAlign = 'right'; ctx.fillText(l.label, w - padR - 2, Math.max(padT + 9, Y(l.y) - 6)); } }
-    for (const s of cfg.series) {
-      if (s.type === 'bar') { const bw = Math.max(1, (w - padL - padR) / n * 0.7); for (let i = 0; i < s.data.length; i++) { const v = s.data[i]; if (v == null) continue; if (!Number.isFinite(v)) { if (s.missing) { ctx.fillStyle = s.missing; ctx.fillRect(X(i) - bw / 2, padT, bw, h - padT - padB); } continue; } ctx.fillStyle = typeof s.color === 'function' ? s.color(v, i) : s.color; const y0 = Y(0), y1 = Y(v); ctx.fillRect(X(i) - bw / 2, Math.min(y0, y1), bw, Math.max(1, Math.abs(y1 - y0))); } }
-      else { ctx.strokeStyle = s.color; ctx.lineWidth = s.width || 1.8; ctx.beginPath(); let pen = false; for (let i = 0; i < s.data.length; i++) { const v = s.data[i]; if (v == null || !Number.isFinite(v)) { pen = false; continue; } if (!pen) { ctx.moveTo(X(i), Y(v)); pen = true; } else ctx.lineTo(X(i), Y(v)); } ctx.stroke(); }
+    for (let i = 0; i <= ticks; i++) {
+      const v = lo + (hi - lo) * i / ticks, y = Y(v);
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+      ctx.textAlign = 'right'; ctx.fillText(cfg.fmt ? cfg.fmt(v) : v.toFixed(Math.abs(hi - lo) < 5 ? 1 : 0), padL - 4, y);
     }
+    if (lo < 0 && hi > 0) { ctx.strokeStyle = muted; ctx.beginPath(); ctx.moveTo(padL, Y(0)); ctx.lineTo(w - padR, Y(0)); ctx.stroke(); }
+
+    // Linhas horizontais com badges temáticos (ex: limiares monetários de Shiryaev R$ 50, R$ 5 mil, R$ 50 mil)
+    for (const l of hlinesList) {
+      const yVal = Y(l.y);
+      ctx.strokeStyle = l.color; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(padL, yVal); ctx.lineTo(w - padR, yVal); ctx.stroke(); ctx.setLineDash([]);
+      if (l.label) {
+        const isMoney = l.label.includes('R$');
+        if (isMoney) {
+          ctx.font = '700 9.5px ' + cssVar('--mono');
+          const tw = ctx.measureText(l.label).width + 10;
+          const tx = w - padR - tw - 2, ty = Math.max(padT + 1, yVal - 8);
+          ctx.fillStyle = toRgba(l.color, 0.18);
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(tx, ty, tw, 15, 4); else ctx.rect(tx, ty, tw, 15);
+          ctx.fill();
+          ctx.strokeStyle = l.color; ctx.lineWidth = 0.8; ctx.stroke();
+          ctx.fillStyle = l.color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(l.label, tx + tw / 2, ty + 7.5);
+        } else {
+          ctx.font = '600 10px ' + cssVar('--mono');
+          ctx.fillStyle = l.color; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+          ctx.fillText(l.label, w - padR - 2, Math.max(padT + 9, yVal - 4));
+        }
+      }
+    }
+
+    // Linhas verticais
+    for (const vl of vlinesList) {
+      const vxPos = vl.x != null ? vl.x : vl.idx;
+      const vx = X(vxPos);
+      if (vx >= padL && vx <= w - padR) {
+        ctx.strokeStyle = vl.color; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(vx, padT); ctx.lineTo(vx, h - padB); ctx.stroke(); ctx.setLineDash([]);
+        if (vl.label) {
+          ctx.font = '600 9.5px ' + cssVar('--mono');
+          ctx.fillStyle = vl.color; ctx.textAlign = vx > w - 70 ? 'right' : 'left';
+          ctx.fillText(vl.label, vx + (vx > w - 70 ? -4 : 4), padT + 9);
+        }
+      }
+    }
+
+    // Series
+    for (const s of cfg.series) {
+      if (s.type === 'bar' || s.bar) {
+        const bw = Math.max(1.5, (w - padL - padR) / n * (s.barWidth || 0.7)), off = (s.barOffset || 0) * bw;
+        for (let i = 0; i < s.data.length; i++) {
+          const v = s.data[i]; if (v == null) continue;
+          if (!Number.isFinite(v)) { if (s.missing) { ctx.fillStyle = s.missing; ctx.fillRect(X(i) - bw / 2 + off, padT, bw, h - padT - padB); } continue; }
+          ctx.fillStyle = typeof s.color === 'function' ? s.color(v, i) : s.color;
+          const y0 = Y(Math.max(lo, Math.min(hi, 0))), y1 = Y(Math.max(lo, Math.min(hi, v)));
+          ctx.fillRect(X(i) - bw / 2 + off, Math.min(y0, y1), bw, Math.max(1.2, Math.abs(y1 - y0)));
+        }
+      } else {
+        const col = typeof s.color === 'function' ? s.color(0, 0) : s.color;
+        // Gradiente luminoso preenchendo a área sob a curva
+        if (s.fill !== false && !s.dotsOnly) {
+          ctx.save(); ctx.beginPath();
+          let firstI = -1, lastI = -1;
+          for (let i = 0; i < s.data.length; i++) {
+            const v = s.data[i]; if (v == null || !Number.isFinite(v)) continue;
+            if (firstI < 0) { firstI = i; ctx.moveTo(X(i), Y(v)); } else ctx.lineTo(X(i), Y(v));
+            lastI = i;
+          }
+          if (firstI >= 0 && lastI > firstI) {
+            const baseY = Y(lo < 0 && hi > 0 ? 0 : lo);
+            ctx.lineTo(X(lastI), baseY); ctx.lineTo(X(firstI), baseY); ctx.closePath();
+            const grad = ctx.createLinearGradient(0, padT, 0, h - padB);
+            grad.addColorStop(0, toRgba(col, s.fillAlphaTop || 0.28));
+            grad.addColorStop(0.65, toRgba(col, s.fillAlphaMid || 0.08));
+            grad.addColorStop(1, toRgba(col, 0.01));
+            ctx.fillStyle = grad; ctx.fill();
+          }
+          ctx.restore();
+        }
+        // Linha com brilho sutil (subtle glow)
+        if (!s.dotsOnly) {
+          ctx.save();
+          ctx.shadowColor = col;
+          ctx.shadowBlur = s.glow !== false ? 5 : 0;
+          ctx.strokeStyle = col; ctx.lineWidth = s.width || 2;
+          if (s.dash) ctx.setLineDash(s.dash);
+          ctx.beginPath(); let pen = false;
+          for (let i = 0; i < s.data.length; i++) {
+            const v = s.data[i]; if (v == null || !Number.isFinite(v)) { pen = false; continue; }
+            if (!pen) { ctx.moveTo(X(i), Y(v)); pen = true; } else ctx.lineTo(X(i), Y(v));
+          }
+          ctx.stroke(); ctx.restore();
+        }
+        if (s.dots || s.dotsOnly) {
+          for (let i = 0; i < s.data.length; i++) {
+            const v = s.data[i]; if (v == null || !Number.isFinite(v)) continue;
+            ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X(i), Y(v), s.dotR || 3.4, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+      }
+    }
+
+    // Badge de alarme CUSUM se C > h
+    if (cusumAlarm) {
+      ctx.save();
+      const txt = '⚠️ ALARME C > h: STEP-UP';
+      ctx.font = '700 9.5px ' + cssVar('--mono');
+      const tw = ctx.measureText(txt).width + 12;
+      const tx = w - padR - tw - 2, ty = padT + 4;
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.92)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(tx, ty, tw, 17, 5); else ctx.rect(tx, ty, tw, 17);
+      ctx.fill();
+      ctx.strokeStyle = '#fee2e2'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(txt, tx + tw / 2, ty + 8.5);
+      ctx.restore();
+    }
+
     ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     if (cfg.xLabels) cfg.xLabels.forEach(([i, t]) => { ctx.textAlign = i === 0 ? 'left' : i >= n - 1 ? 'right' : 'center'; ctx.fillText(t, X(i), h - 5); });
     if (cfg.title) { ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText(cfg.title, padL + 4, padT + 8); }
+
+    // inspeção interativa (crosshair)
+    if (cv._hx != null && cv._hx >= padL && cv._hx <= w - padR) {
+      const idx = Math.max(0, Math.min(n - 1, Math.round(((cv._hx - padL) / Math.max(1, w - padL - padR)) * (n - 1))));
+      const cx = X(idx);
+      ctx.strokeStyle = fg; ctx.globalAlpha = 0.35; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx, padT); ctx.lineTo(cx, h - padB); ctx.stroke(); ctx.globalAlpha = 1;
+      const parts = [];
+      for (const s of cfg.series) {
+        const v = s.data[idx];
+        if (v != null && Number.isFinite(v)) {
+          const c = typeof s.color === 'function' ? s.color(v, idx) : s.color;
+          ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx, Y(Math.max(lo, Math.min(hi, v))), 3.5, 0, Math.PI * 2); ctx.fill();
+          parts.push((s.name ? s.name + ': ' : '') + (cfg.fmt ? cfg.fmt(v) : v.toFixed(2)).replace('.', ','));
+        }
+      }
+      if (parts.length) {
+        const txt = `[${idx + 1}/${n}] ` + parts.join(' · ');
+        ctx.font = '600 10px ' + cssVar('--mono');
+        const tw = ctx.measureText(txt).width + 10, tx = Math.min(w - padR - tw, Math.max(padL + 2, cx - tw / 2));
+        ctx.fillStyle = panel; ctx.globalAlpha = 0.92; ctx.fillRect(tx, padT + 1, tw, 15);
+        ctx.strokeStyle = line; ctx.strokeRect(tx, padT + 1, tw, 15); ctx.globalAlpha = 1;
+        ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, tx + 5, padT + 8.5);
+      }
+    }
   }
 
   /* ---------- componentes compartilhados (sessão: métricas, ações, step-up) ---------- */
@@ -2048,14 +2504,156 @@ const Recorder = (() => {
     $('#lv-log').innerHTML = live.log.map(l => `<li class="${l.cls || ''}"><time>${l.t} s</time><span>${esc(l.msg)}</span></li>`).join('');
     liveCharts();
   }
+  function buildZones(arr, pred, col) {
+    const out = []; let s = -1;
+    for (let i = 0; i < arr.length; i++) {
+      if (pred(arr[i], i)) { if (s < 0) s = i; }
+      else if (s >= 0) { out.push([Math.max(0, s - 0.5), i - 0.5, col]); s = -1; }
+    }
+    if (s >= 0) out.push([Math.max(0, s - 0.5), arr.length - 1, col]);
+    return out;
+  }
   function liveCharts() {
     const H = live.hist, n = HIST, pad = n - H.length, padArr = a => Array(pad).fill(null).concat(a);
     const xl = [[0, '−120 s'], [Math.floor(n / 2), '−60 s'], [n - 1, 'agora']];
     const good = cssVar('--good'), bad = cssVar('--bad'), info = cssVar('--info'), warn = cssVar('--warn'), violet = cssVar('--violet'), muted = cssVar('--muted');
-    chart($('#lv-c1'), { n, xLabels: xl, series: [{ type: 'bar', data: padArr(H.map(h => h.l)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { data: padArr(H.map(h => h.Lambda)), color: info }], hlines: [{ y: E.lnB(live.s.r), color: info, label: 'ln B_r' }], yMin: -4, yMax: 4 });
-    chart($('#lv-c2'), { n, xLabels: xl, series: [{ data: padArr(H.map(h => h.C)), color: warn }], hlines: [{ y: live.p.h, color: bad, label: 'h' }], yMin: 0, yMax: live.p.h * 1.1, hardMin: true });
+    const paddedH = padArr(H);
+    const zones = buildZones(paddedH, h => h && h.holder === 'impostor', cssVar('--bad-soft'));
+    const vlines = [];
+    for (let i = 1; i < paddedH.length; i++) {
+      if (paddedH[i - 1] && paddedH[i] && paddedH[i - 1].holder !== paddedH[i].holder) {
+        vlines.push({ x: i, color: paddedH[i].holder === 'impostor' ? bad : good, label: paddedH[i].holder === 'impostor' ? 'troca' : 'retomada' });
+      }
+    }
+    chart($('#lv-c1'), { n, xLabels: xl, zones, vlines, series: [{ type: 'bar', name: 'ℓ_k', data: padArr(H.map(h => h.l)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { name: 'Λ', data: padArr(H.map(h => h.Lambda)), color: info }], hlines: [{ y: E.lnB(live.s.r), color: info, label: 'ln B_r' }, { y: E.lnA(live.s.r), color: warn, label: 'ln A' }], yMin: -5, yMax: 6 });
+    chart($('#lv-c2'), { n, xLabels: xl, zones, vlines, series: [{ name: 'C', data: padArr(H.map(h => h.C)), color: warn }], hlines: [{ y: live.p.h, color: bad, label: 'h' }], yMin: 0, yMax: live.p.h * 1.1, hardMin: true });
     const thr = L => Math.log10(E.phiThreshold(live.p, L));
-    chart($('#lv-c3'), { n, xLabels: xl, series: [{ data: padArr(H.map(h => h.phi > 0 ? Math.log10(h.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
+    chart($('#lv-c3'), { n, xLabels: xl, zones, vlines, series: [{ name: 'log₁₀ φ', data: padArr(H.map(h => h.phi > 0 ? Math.log10(h.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
+    renderLiveFlowAndPhase();
+  }
+  function renderLiveFlowAndPhase() {
+    const s = live.s, p = live.p, H = live.hist;
+    const svg = $('#lv-flow-svg');
+    if (svg) {
+      $('#lv-flow-step').textContent = `passo ${s.k} · t = ${s.t} s`;
+      const qOn = s.q !== 0, lVal = qOn && Number.isFinite(s.l) ? f2(s.l) : 'abst.', lPos = s.l >= 0;
+      const lnBr = E.lnB(s.r), lnAr = E.lnA(s.r), thr50k = E.phiThreshold(p, 50000);
+      const c6 = p.gateOnScore;
+      const qCol = c6 ? 'var(--bad)' : qOn ? 'var(--good)' : 'var(--warn)';
+      const lCol = !qOn ? 'var(--muted)' : lPos ? 'var(--good)' : 'var(--bad)';
+      const sprtCol = s.stepUpPending === 'sprt' ? 'var(--warn)' : 'var(--info)';
+      const cusCol = s.C > p.h ? 'var(--bad)' : s.C > 0.5 * p.h ? 'var(--warn)' : 'var(--good)';
+      const phiCol = s.phi > thr50k ? 'var(--bad)' : 'var(--violet)';
+      const scCol = s.S < p.Smin ? 'var(--warn)' : 'var(--accent)';
+      const pctLam = Math.max(0, Math.min(100, ((s.Lambda - lnAr) / Math.max(1, lnBr - lnAr)) * 100));
+      const pctC = Math.max(0, Math.min(100, (s.C / Math.max(1, p.h)) * 100));
+      const pctPhi = s.phi > 0 ? Math.max(0, Math.min(100, ((Math.log10(s.phi) + 8) / 8) * 100)) : 0;
+      const pctS = Math.max(0, Math.min(100, s.S * 100));
+      svg.innerHTML = `
+        <defs>
+          <marker id="fa" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1L7 4L0 7z" fill="var(--muted)"/></marker>
+        </defs>
+        <g font-family="var(--sans)" font-size="10.5" fill="var(--fg)">
+          <!-- Nó 1: IMU -->
+          <rect x="8" y="76" width="88" height="68" rx="10" fill="var(--panel2)" stroke="var(--line2)"/>
+          <text x="52" y="96" text-anchor="middle" font-weight="700">IMU 4 s</text>
+          <text x="52" y="112" text-anchor="middle" font-size="9.5" fill="var(--muted)">salto Δ = 2 s</text>
+          <text x="52" y="130" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="${s.holder === 'impostor' ? 'var(--bad)' : 'var(--good)'}">${s.holder === 'impostor' ? 'impostor' : 'titular'}</text>
+          <line x1="96" y1="110" x2="122" y2="110" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#fa)"/>
+          <!-- Nó 2: Gate q_k -->
+          <rect x="124" y="70" width="96" height="80" rx="10" fill="var(--panel2)" stroke="${qCol}" stroke-width="1.6"/>
+          <text x="172" y="90" text-anchor="middle" font-weight="700">Portão q_k (§7)</text>
+          <text x="172" y="108" text-anchor="middle" font-family="var(--mono)" font-weight="700" fill="${qCol}">${c6 ? 'ERRO C6!' : qOn ? 'q_k = 1 (ativa)' : 'q_k = 0 (abst.)'}</text>
+          <text x="172" y="124" text-anchor="middle" font-size="9" fill="var(--muted)">${c6 ? 'viés por escore' : 'só captura física'}</text>
+          <text x="172" y="139" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--muted)">q̄ = ${s.counters.windows ? Math.round(100 * (1 - s.counters.abstained / s.counters.windows)) : 100}%</text>
+          <line x1="220" y1="110" x2="246" y2="110" stroke="${qCol}" stroke-width="1.5" marker-end="url(#fa)"/>
+          <!-- Nó 3: LLR -->
+          <rect x="248" y="76" width="84" height="68" rx="10" fill="var(--panel2)" stroke="${lCol}" stroke-width="1.5"/>
+          <text x="290" y="96" text-anchor="middle" font-weight="700">LLR ℓ_k</text>
+          <text x="290" y="115" text-anchor="middle" font-family="var(--mono)" font-size="11.5" font-weight="700" fill="${lCol}">${lVal}</text>
+          <text x="290" y="132" text-anchor="middle" font-size="9" fill="var(--muted)">d′=${pt(p.dp.toFixed(2))} · V=${pt(((1 + p.rho) / (1 - p.rho)).toFixed(1))}</text>
+          <!-- Ramificações para os 4 guardiões -->
+          <path d="M332 95 C350 95, 350 32, 368 32" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#fa)"/>
+          <path d="M332 105 C350 105, 350 84, 368 84" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#fa)"/>
+          <path d="M332 115 C350 115, 350 138, 368 138" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#fa)"/>
+          <path d="M332 125 C350 125, 350 192, 368 192" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#fa)"/>
+          <!-- Guardião 1: SPRT -->
+          <rect x="370" y="10" width="162" height="44" rx="8" fill="var(--panel2)" stroke="${sprtCol}" stroke-width="1.3"/>
+          <text x="378" y="25" font-weight="700" font-size="10">Λ · SPRT (Ville, r=${s.r})</text>
+          <text x="524" y="25" text-anchor="end" font-family="var(--mono)" font-size="9.5" fill="${sprtCol}">${f1(s.Lambda)} / ${f1(lnBr)}</text>
+          <rect x="378" y="32" width="146" height="5" rx="2.5" fill="var(--bg2)"/>
+          <rect x="378" y="32" width="${(1.46 * pctLam).toFixed(1)}" height="5" rx="2.5" fill="${sprtCol}"/>
+          <text x="378" y="47" font-size="8.5" fill="var(--muted)">renovações: ${s.r - 1} · α gasto: ${pt((100 * s.alphaSpent / E.ALPHA_SESS).toFixed(1))}%</text>
+          <!-- Guardião 2: CUSUM -->
+          <rect x="370" y="62" width="162" height="44" rx="8" fill="var(--panel2)" stroke="${cusCol}" stroke-width="1.3"/>
+          <text x="378" y="77" font-weight="700" font-size="10">C · CUSUM (Troca)</text>
+          <text x="524" y="77" text-anchor="end" font-family="var(--mono)" font-size="9.5" fill="${cusCol}">${f2(s.C)} / h=${pt(p.h)}</text>
+          <rect x="378" y="84" width="146" height="5" rx="2.5" fill="var(--bg2)"/>
+          <rect x="378" y="84" width="${(1.46 * pctC).toFixed(1)}" height="5" rx="2.5" fill="${cusCol}"/>
+          <text x="378" y="99" font-size="8.5" fill="var(--muted)">${s.C > p.h ? 'ALARME: step-up!' : 'acumula −ℓ_k − ν pós-troca'}</text>
+          <!-- Guardião 3: Shiryaev -->
+          <rect x="370" y="116" width="162" height="44" rx="8" fill="var(--panel2)" stroke="${phiCol}" stroke-width="1.3"/>
+          <text x="378" y="131" font-weight="700" font-size="10">φ · Shiryaev (Valor)</text>
+          <text x="524" y="131" text-anchor="end" font-family="var(--mono)" font-size="9.5" fill="${phiCol}">${sci(s.phi)}</text>
+          <rect x="378" y="138" width="146" height="5" rx="2.5" fill="var(--bg2)"/>
+          <rect x="378" y="138" width="${(1.46 * pctPhi).toFixed(1)}" height="5" rx="2.5" fill="${phiCol}"/>
+          <text x="378" y="153" font-size="8.5" fill="var(--muted)">TED 50k exige φ &lt; ${sci(thr50k)}</text>
+          <!-- Guardião 4: Score S -->
+          <rect x="370" y="170" width="162" height="44" rx="8" fill="var(--panel2)" stroke="${scCol}" stroke-width="1.3"/>
+          <text x="378" y="185" font-weight="700" font-size="10">S · Score Interface</text>
+          <text x="524" y="185" text-anchor="end" font-family="var(--mono)" font-size="9.5" fill="${scCol}">${f2(s.S)} (mín ${pt(p.Smin)})</text>
+          <rect x="378" y="192" width="146" height="5" rx="2.5" fill="var(--bg2)"/>
+          <rect x="378" y="192" width="${(1.46 * pctS).toFixed(1)}" height="5" rx="2.5" fill="${scCol}"/>
+          <text x="378" y="207" font-size="8.5" fill="var(--muted)">decai em toda janela (C9)</text>
+        </g>`;
+    }
+    // Retrato de fase (Λ_k × C_k)
+    const cv = $('#lv-phase');
+    if (!cv || cv.offsetParent === null) return;
+    $('#lv-phase-txt').textContent = `Λ = ${f1(s.Lambda)} · C = ${f2(s.C)}`;
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    const padL = 38, padR = 12, padT = 12, padB = 22;
+    const lnBr = E.lnB(s.r), lnAr = E.lnA(s.r);
+    const xMin = Math.min(lnAr - 1.5, ...H.map(pt0 => pt0.Lambda)), xMax = Math.max(lnBr + 1.5, ...H.map(pt0 => pt0.Lambda));
+    const yMin = 0, yMax = Math.max(p.h * 1.2, ...H.map(pt0 => pt0.C));
+    const X = v => padL + ((v - xMin) / Math.max(1e-6, xMax - xMin)) * (w - padL - padR);
+    const Y = v => padT + (1 - (v - yMin) / Math.max(1e-6, yMax - yMin)) * (h - padT - padB);
+    const muted = cssVar('--muted'), line = cssVar('--line'), good = cssVar('--good'), bad = cssVar('--bad'), info = cssVar('--info'), warn = cssVar('--warn'), fg = cssVar('--fg');
+    // região de alarme C > h
+    const yh = Y(p.h);
+    ctx.fillStyle = cssVar('--bad-soft'); ctx.fillRect(padL, padT, w - padL - padR, Math.max(0, yh - padT));
+    // grade
+    ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.font = '10px ' + cssVar('--mono'); ctx.fillStyle = muted;
+    for (let i = 0; i <= 3; i++) {
+      const vy = yMin + (yMax - yMin) * i / 3, yy = Y(vy);
+      ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(w - padR, yy); ctx.stroke();
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(vy.toFixed(1), padL - 4, yy);
+    }
+    // paredes de decisão: ln A, 0, ln B_r, e teto h
+    const drawV = (vx, col, lbl) => { const x = X(vx); ctx.strokeStyle = col; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, h - padB); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillText(lbl, x, h - 5); };
+    drawV(lnAr, warn, 'ln A'); drawV(0, muted, 'Λ=0'); drawV(lnBr, info, 'ln B_r');
+    ctx.strokeStyle = bad; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(padL, yh); ctx.lineTo(w - padR, yh); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = bad; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('limiar CUSUM h = ' + pt(p.h), w - padR - 4, yh - 3);
+    // trajetória (Λ_k, C_k)
+    for (let i = 1; i < H.length; i++) {
+      const a = H[i - 1], b = H[i];
+      ctx.strokeStyle = b.holder === 'impostor' ? bad : good;
+      ctx.globalAlpha = 0.22 + 0.78 * (i / H.length);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(a.Lambda), Y(a.C)); ctx.lineTo(X(b.Lambda), Y(b.C)); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < H.length; i++) {
+      const pt0 = H[i];
+      ctx.fillStyle = pt0.holder === 'impostor' ? bad : good;
+      ctx.globalAlpha = 0.25 + 0.75 * (i / H.length);
+      ctx.beginPath(); ctx.arc(X(pt0.Lambda), Y(pt0.C), i === H.length - 1 ? 4.5 : 2.3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const curX = X(s.Lambda), curY = Y(s.C);
+    ctx.strokeStyle = fg; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(curX, curY, 6.5, 0, Math.PI * 2); ctx.stroke();
   }
   function liveTimer() { clearInterval(live.timer); live.timer = setInterval(liveStep, Math.max(25, 2000 / live.speed)); }
   buildActions($('#lv-actions'), liveExec);
@@ -2174,7 +2772,82 @@ const Recorder = (() => {
       ['corte do LLR', `ℓ ≤ +${SensorLab.CLIP_UP} nats (só por cima: preserva o supermartingale)`],
       ['garantia de Ville', lab.cohort ? 'só com população medida e LLR calibrado (H7)' : 'NÃO vale: f_I é prior declarado'],
     ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
-    if (dp) chart($('#sn-cd'), { n: dp.per.length, series: [{ type: 'bar', data: dp.per, color: cssVar('--accent') }], yMin: 0, xLabels: SensorLab.FEAT.map((f, i) => [i, f.k]) });
+    if ($('#sn-cd')) {
+      const dPrime = dp ? dp.total : 1.5;
+      const nPts = 45;
+      const xs = Array.from({ length: nPts }, (_, i) => -4.5 + (9 / (nPts - 1)) * i);
+      const halfD = dPrime / 2;
+      const normPdf = (x, m) => +( (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * (x - m) ** 2) ).toFixed(4);
+      const dataG = xs.map(x => normPdf(x, halfD));
+      const dataI = xs.map(x => normPdf(x, -halfD));
+      const eer = +(100 * E.Phi(-halfD)).toFixed(1);
+      const splitIdx = Math.round((4.5 / 9) * (nPts - 1));
+      chart($('#sn-cd'), {
+        n: nPts, yMin: 0, yMax: 0.46,
+        xLabels: [[0, 'z=−4,5'], [Math.round(splitIdx / 2), 'impostor'], [splitIdx, 'z=0 (corte)'], [Math.round((splitIdx + nPts) / 2), 'titular'], [nPts - 1, 'z=+4,5']],
+        vlines: [{ x: splitIdx, color: cssVar('--fg'), label: `corte z=0 (EER=${eer}%)` }],
+        zones: [
+          { x0: splitIdx, x1: nPts - 1, color: 'rgba(239, 68, 68, 0.12)' },
+          { x0: 0, x1: splitIdx, color: 'rgba(34, 197, 94, 0.10)' },
+        ],
+        series: [
+          { name: `Titular f_G (d′=${dPrime.toFixed(2)})`, data: dataG, color: cssVar('--good'), fill: true, fillAlphaTop: 0.28 },
+          { name: 'Impostor f_I (prior)', data: dataI, color: cssVar('--bad'), fill: true, fillAlphaTop: 0.24 },
+        ],
+      });
+      const leg = $('#sn-cd').previousElementSibling;
+      if (leg && leg.classList.contains('legend')) {
+        leg.innerHTML = `<span><i style="background:var(--good)"></i>Titular f_G (α=${eer}%)</span><span><i style="background:var(--bad)"></i>Impostor f_I (β=${eer}%)</span><span><b style="color:var(--accent)">d′ = ${dPrime.toFixed(2)}</b> (${dPrime >= 2.0 ? 'separação alta' : dPrime >= 1.4 ? 'moderada' : 'baixa'})</span>`;
+      }
+    }
+    // gráfico PSD da janela (ou espectro de referência ilustrativo quando sem amostras)
+    {
+      const specBins = 40, fMax = 20;
+      let psd = [];
+      if (w && w.f && w.f.spec && w.f.df) {
+        for (let i = 0; i < specBins; i++) {
+          const fHz = (i / (specBins - 1)) * fMax, k = Math.max(1, Math.round(fHz / w.f.df));
+          psd.push(Math.log10(Math.max(1e-7, w.f.spec[k] || 1e-7)));
+        }
+      } else {
+        for (let i = 0; i < specBins; i++) {
+          const fHz = (i / (specBins - 1)) * fMax;
+          const v = 1e-3 * Math.exp(-0.5 * ((fHz - 1.8) / 1.1) ** 2) + 8e-5 * Math.exp(-0.5 * ((fHz - 8.5) / 1.8) ** 2) + 1e-6;
+          psd.push(Math.log10(v));
+        }
+      }
+      const i05 = Math.round((0.5 / fMax) * (specBins - 1)), i4 = Math.round((4 / fMax) * (specBins - 1)), i12 = Math.round((12 / fMax) * (specBins - 1));
+      chart($('#sn-spec'), {
+        n: specBins,
+        zones: [[i05, i4, cssVar('--good-soft')], [i4, i12, cssVar('--info-soft')]],
+        vlines: [{ x: i4, color: cssVar('--good'), label: '4 Hz' }, { x: i12, color: cssVar('--violet'), label: '12 Hz' }],
+        series: [{ name: 'log₁₀ P_ω', data: psd, color: cssVar('--accent') }],
+        xLabels: [[0, '0 Hz'], [i4, '4 Hz'], [i12, '12 Hz'], [specBins - 1, '20 Hz']],
+        yMin: -6.5, yMax: -1.5, fmt: v => '10' + sup(Math.round(v)),
+        title: w ? '' : 'espectro ilustrativo (ative os sensores)',
+      });
+    }
+    // gráfico Z-score por feature (|z_u| vs |z_I|)
+    {
+      const T = lab.template, I = lab.cohort;
+      const zu = SensorLab.FEAT.map((ft, j) => (w && T) ? Math.min(6, Math.abs((w.f.vec[j] - T.mu[j]) / T.sd[j])) : 0);
+      const zi = SensorLab.FEAT.map((ft, j) => {
+        if (!w) return 0;
+        const mi = I ? I.mu[j] : ft.prior[0], si = I ? I.sd[j] : ft.prior[1];
+        return Math.min(6, Math.abs((w.f.vec[j] - mi) / si));
+      });
+      chart($('#sn-zchart'), {
+        n: SensorLab.FEAT.length,
+        series: [
+          { type: 'bar', name: '|z_u| titular', data: zu, color: cssVar('--good'), barWidth: 0.36, barOffset: -0.52 },
+          { type: 'bar', name: '|z_I| impostor', data: zi, color: cssVar('--bad'), barWidth: 0.36, barOffset: 0.52 },
+        ],
+        hlines: [{ y: 2, color: cssVar('--muted'), label: '2σ' }],
+        yMin: 0, yMax: 5, hardMin: true,
+        xLabels: SensorLab.FEAT.map((f, i) => [i, f.k]),
+        title: w && T ? '' : 'cadastre ou carregue o template para comparar |z_u| vs |z_I|',
+      });
+    }
     const s = lab.session;
     const badge = $('#sn-badge');
     if (!lab.template) { badge.className = 'badge neutral'; badge.textContent = 'sem template'; }
@@ -2187,12 +2860,13 @@ const Recorder = (() => {
     renderStepUp($('#sn-stepup'), s, lab.sessionLabel === 'owner', approved => { lab.resolveStepUp(approved); snRender(); });
     const W = lab.windows.filter(x => x.session).slice(-60), n = 60, pad = n - W.length, P = a => Array(pad).fill(null).concat(a);
     const good = cssVar('--good'), bad = cssVar('--bad'), info = cssVar('--info'), warn = cssVar('--warn'), violet = cssVar('--violet'), muted = cssVar('--muted');
+    const paddedW = P(W), zones = buildZones(paddedW, x => x && x.label === 'other', cssVar('--bad-soft'));
     const xl = [[0, '−120 s'], [n - 1, 'agora']];
     const clampL = v => Math.max(-6, Math.min(6, v));
-    chart($('#sn-c1'), { n, xLabels: xl, series: [{ type: 'bar', data: P(W.map(x => x.q ? clampL(x.l) : NaN)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { data: P(W.map(x => Math.max(-20, x.session.Lambda))), color: info }], hlines: [{ y: E.lnB(s.r), color: info, label: 'ln B_r' }], yMin: -6, yMax: 6 });
-    chart($('#sn-c2'), { n, xLabels: xl, series: [{ data: P(W.map(x => x.session.C)), color: warn }], hlines: [{ y: lab.p.h, color: bad, label: 'h' }], yMin: 0, yMax: lab.p.h * 1.1, hardMin: true });
+    chart($('#sn-c1'), { n, xLabels: xl, zones, series: [{ type: 'bar', name: 'ℓ_k', data: P(W.map(x => x.q ? clampL(x.l) : NaN)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { name: 'Λ', data: P(W.map(x => Math.max(-20, x.session.Lambda))), color: info }], hlines: [{ y: E.lnB(s.r), color: info, label: 'ln B_r' }], yMin: -6, yMax: 6 });
+    chart($('#sn-c2'), { n, xLabels: xl, zones, series: [{ name: 'C', data: P(W.map(x => x.session.C)), color: warn }], hlines: [{ y: lab.p.h, color: bad, label: 'h' }], yMin: 0, yMax: lab.p.h * 1.1, hardMin: true });
     const thr = L => Math.log10(E.phiThreshold(lab.p, L));
-    chart($('#sn-c3'), { n, xLabels: xl, series: [{ data: P(W.map(x => x.session.phi > 0 ? Math.log10(x.session.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
+    chart($('#sn-c3'), { n, xLabels: xl, zones, series: [{ name: 'log₁₀ φ', data: P(W.map(x => x.session.phi > 0 ? Math.log10(x.session.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
   }
 
   /* ============================================================ COLETAR ============================================================ */
@@ -2220,7 +2894,7 @@ const Recorder = (() => {
     if (v !== 'table') lab.setLabel(v);
     $('#sn-label-owner').setAttribute('aria-pressed', String(lab.sessionLabel === 'owner'));
     $('#sn-label-other').setAttribute('aria-pressed', String(lab.sessionLabel === 'other'));
-    if (cl.rec && changed) { cl.rec.event('holder', v); clEvents(); }
+    if (cl.rec && changed) { cl.rec.event('holder', v); clEvents(); } else clTimeline();
     snRender();
   }
   function setPosture(v) {
@@ -2291,6 +2965,7 @@ const Recorder = (() => {
     $('#cl-n').textContent = r.meta.n.toLocaleString('pt-BR');
     const fs = r.fs; $('#cl-fs').textContent = fs ? fs.toFixed(0) : '—';
     $('#cl-gaps').textContent = String(r.meta.gaps);
+    clTimeline();
     if (cl.rec && store.degraded) { if (cl.lastErr !== 'mem') { cl.lastErr = 'mem'; clMsg('O armazenamento do aparelho falhou; a gravação continua só na memória. Não feche nem recarregue a página e exporte ao terminar.', 'bad'); } }
     else if (cl.rec && r.error) { if (cl.lastErr !== r.error) { cl.lastErr = r.error; clMsg(`Falha ao salvar (${r.error.message || r.error}); tentando de novo. ${r.unsaved} amostras aguardando.`, 'warn'); } }
     else if (cl.rec && cl.lastErr) { cl.lastErr = null; clMsg(null); }
@@ -2318,8 +2993,33 @@ const Recorder = (() => {
     $('#rec-chip').hidden = !on;
     $$('#cl-list button[data-id]').forEach(b => { b.disabled = on; b.title = on ? 'Pare a gravação para exportar ou apagar (evita lacunas na coleta)' : ''; });
   }
+  function clTimeline() {
+    const bar = $('#cl-tl-bar'), txt = $('#cl-tl-txt');
+    if (!bar || !txt) return;
+    const r = cl.rec;
+    if (!r || !r.meta || !(r.meta.duration > 0)) {
+      bar.innerHTML = `<div class="tl-seg ${esc(cl.holder)}" style="width:100%"></div>`;
+      txt.textContent = `${HOLDER_TXT[cl.holder] || cl.holder} 100 %`;
+      return;
+    }
+    const dur = Math.max(0.1, r.meta.duration), evs = r.meta.events || [];
+    const hEvs = evs.filter(e => e.type === 'holder').sort((a, b) => a.t - b.t);
+    const segs = []; let curH = hEvs.length ? hEvs[0].value : cl.holder, lastT = 0;
+    for (const e of hEvs) {
+      if (e.t > lastT) segs.push({ h: curH, dt: e.t - lastT });
+      curH = e.value; lastT = e.t;
+    }
+    if (dur > lastT) segs.push({ h: curH, dt: dur - lastT });
+    const sums = { owner: 0, other: 0, table: 0 };
+    segs.forEach(s => { sums[s.h] = (sums[s.h] || 0) + s.dt; });
+    const pins = evs.filter(e => e.type === 'marker' || e.type === 'gap').map(e => `<i class="tl-pin ${e.type === 'gap' ? 'gap' : ''}" style="left:${Math.min(99, Math.max(1, (e.t / dur) * 100)).toFixed(1)}%" title="${esc(e.type + ': ' + e.value)}"></i>`).join('');
+    bar.innerHTML = segs.map(s => `<div class="tl-seg ${esc(s.h)}" style="width:${((s.dt / dur) * 100).toFixed(2)}%"></div>`).join('') + pins;
+    const parts = Object.entries(sums).filter(([, v]) => v > 0.01).map(([k, v]) => `${HOLDER_TXT[k] || k} ${Math.round((v / dur) * 100)} %`);
+    txt.textContent = parts.join(' · ') || 'titular 100 %';
+  }
   function clEvents() {
     const r = cl.rec; const el = $('#cl-events');
+    clTimeline();
     if (!r) { el.innerHTML = ''; return; }
     const lbl = { start: 'início', holder: 'segura', posture: 'postura', marker: 'marcador', gap: 'lacuna', hidden: 'segundo plano', visible: 'primeiro plano', stop: 'fim', note: 'nota' };
     const val = e => e.type === 'holder' ? HOLDER_TXT[e.value] || e.value : e.value;
@@ -2328,8 +3028,9 @@ const Recorder = (() => {
   function clSignals() {
     if (currentTab !== 'collect') return;
     const n = 100, pad = n - sn.strip.length, P = a => Array(pad).fill(null).concat(a);
-    chart($('#cl-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ data: P(sn.strip.map(s => s.a)), color: cssVar('--info') }, { data: P(sn.strip.map(s => s.w)), color: cssVar('--warn') }], yMin: 0 });
+    chart($('#cl-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ name: '|a_lin|', data: P(sn.strip.map(s => s.a)), color: cssVar('--info') }, { name: '|ω|', data: P(sn.strip.map(s => s.w)), color: cssVar('--warn') }], yMin: 0 });
     $('#cl-sig-note').textContent = lab.running ? (lab.noGyro ? 'sem giroscópio' : '') : 'sensores parados';
+    clTimeline();
   }
 
   async function clList() {
@@ -2395,7 +3096,15 @@ const Recorder = (() => {
     $('#cl-dl-csv').addEventListener('click', () => cl.exp && downloadFile(cl.exp.files[0], cl.exp.files[0].name));
     $('#cl-dl-ev').addEventListener('click', () => cl.exp && downloadFile(cl.exp.files[1], cl.exp.files[1].name));
     $('#cl-dl-json').addEventListener('click', () => cl.exp && downloadFile(cl.exp.files[2], cl.exp.files[2].name));
-    $('#cl-dialog').addEventListener('click', e => { if (e.target === e.currentTarget) closeDialog(e.currentTarget); });
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+      const clDlg = $('#cl-dialog');
+      clDlg.addEventListener('click', event => {
+        if (event.target !== clDlg) return;
+        const rect = clDlg.getBoundingClientRect();
+        const isDialogContent = rect.top <= event.clientY && event.clientY <= rect.top + rect.height && rect.left <= event.clientX && event.clientX <= rect.left + rect.width;
+        if (!isDialogContent) closeDialog(clDlg);
+      });
+    }
     $('#cl-dialog .btn.ghost').addEventListener('click', e => { e.preventDefault(); closeDialog($('#cl-dialog')); });
     document.addEventListener('visibilitychange', () => {
       if (!cl.rec) return;
@@ -2406,7 +3115,7 @@ const Recorder = (() => {
     window.addEventListener('pagehide', () => { if (cl.rec) cl.rec.flush(); });
     if (!lab.supported) clMsg('Este navegador não expõe sensores de movimento (DeviceMotion). Para coletar, abra a página no Safari do iPhone, por HTTPS.', 'warn');
     else if (!window.isSecureContext) clMsg('A página não está em HTTPS: o iPhone não libera os sensores. Veja “Como coletar no iPhone”.', 'warn');
-    clUI();
+    clUI(); clTimeline();
     const setBarH = () => document.documentElement.style.setProperty('--appbar-h', $('.appbar').offsetHeight + 'px');
     setBarH(); window.addEventListener('resize', setBarH);
     cl.recovered = store.ready.then(() => store.recoverInterrupted(cl.rec && cl.rec.id)).then(k => { if (k) clMsg(`${k} gravação(ões) ficaram abertas quando a página fechou; estão marcadas como interrompidas e podem ser exportadas.`, 'warn'); }).catch(() => {}).then(clList);
@@ -2414,8 +3123,58 @@ const Recorder = (() => {
 
   /* ============================================================ TESTES ============================================================ */
   const tbody = $('#ts-table tbody');
-  function tsInit() { tbody.innerHTML = E.TESTS.map(t => `<tr id="ts-${t.id}"><td class="mono">${t.id}</td><td>${t.name}</td><td class="small">${t.ref}</td><td class="mono small">—</td><td class="pend">pendente</td><td class="mono small">—</td></tr>`).join(''); }
-  function tsRow(i, res, ms) { const row = $('#ts-' + E.TESTS[i].id); row.cells[3].textContent = pt(res.text); row.cells[4].innerHTML = res.ok ? '<span class="pass">passou</span>' : '<span class="fail">falhou</span>'; row.cells[5].textContent = ms.toFixed(0); }
+  const tsEmp = { d0_m0: null, d0_m5: null, lossA: 69.4, lossB: 52.2, lossC: 1.10, fricB: 1.29, fricC: 28.4, farVille: -0.39, farC6: 3.41, faphRaw: 1.20, faphDef: -0.47, faphWh: -0.05 };
+  function renderTestCharts() {
+    const dps = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
+    const calcDelay = (dp, m) => {
+      const mu = 0.5 * dp * dp * (1 - m) - 0.25;
+      return mu <= 0.08 ? 45 : Math.min(45, +(8 / mu - 1.5).toFixed(2));
+    };
+    const empSeries = dps.map(dp => dp === 1.5 ? tsEmp.d0_m0 : null);
+    chart($('#ts-c1'), {
+      n: dps.length, yMin: 0, yMax: 46,
+      xLabels: dps.map((d, i) => [i, 'd′=' + d.toFixed(1).replace('.', ',')]),
+      hline: [{ y: 7.55, color: cssVar('--good'), label: 'Tab. 10 (7,55)' }],
+      series: [
+        { name: 'm=0 (sem imitação)', data: dps.map(d => calcDelay(d, 0)), color: cssVar('--accent'), fill: 'rgba(0,113,227,.10)', dots: true },
+        { name: 'm=0,30', data: dps.map(d => calcDelay(d, 0.3)), color: cssVar('--warn'), dots: true },
+        { name: 'm=0,50 (T7)', data: dps.map(d => calcDelay(d, 0.5)), color: cssVar('--bad'), dots: true },
+        ...(tsEmp.d0_m0 != null ? [{ name: 'MC T3 (m=0)', data: empSeries, color: cssVar('--good'), dots: true }] : []),
+      ],
+    });
+    chart($('#ts-c2'), {
+      n: 3, yMin: 0, yMax: 80,
+      xLabels: [[0, 'Regime A (s/ portão)'], [1, 'Regime B (φ s/ C)'], [2, 'Regime C (φ + C)']],
+      hline: [{ y: tsEmp.lossC, color: cssVar('--good'), label: `C: perda ${tsEmp.lossC.toFixed(2).replace('.', ',')} %` }],
+      series: [
+        { name: 'Perda esperada (%)', data: [tsEmp.lossA, tsEmp.lossB, tsEmp.lossC], color: cssVar('--bad'), bar: true, barWidth: 0.34, barOffset: -0.19 },
+        { name: 'Fricção c_u (%)', data: [0, tsEmp.fricB, tsEmp.fricC], color: cssVar('--warn'), bar: true, barWidth: 0.34, barOffset: 0.19 },
+      ],
+    });
+    chart($('#ts-c3'), {
+      n: 5, yMin: -0.8, yMax: 3.8,
+      xLabels: [[0, 'Ville q anc.'], [1, 'Erro C6'], [2, 'AR(1) bruto'], [3, 'Deflação V'], [4, 'Branqueado']],
+      hline: [{ y: 0, color: cssVar('--good'), label: 'nominal (1×)' }],
+      series: [
+        { name: 'log₁₀(taxa / nominal)', data: [tsEmp.farVille, tsEmp.farC6, tsEmp.faphRaw, tsEmp.faphDef, tsEmp.faphWh], color: cssVar('--accent'), bar: true, barWidth: 0.48 },
+      ],
+    });
+  }
+  function tsInit() { tbody.innerHTML = E.TESTS.map(t => `<tr id="ts-${t.id}"><td class="mono">${t.id}</td><td>${t.name}</td><td class="small">${t.ref}</td><td class="mono small">—</td><td class="pend">pendente</td><td class="mono small">—</td></tr>`).join(''); renderTestCharts(); }
+  function tsRow(i, res, ms) {
+    const id = E.TESTS[i].id, row = $('#ts-' + id);
+    row.cells[3].textContent = pt(res.text);
+    row.cells[4].innerHTML = res.ok ? '<span class="pass">passou</span>' : '<span class="fail">falhou</span>';
+    row.cells[5].textContent = ms.toFixed(0);
+    if (id === 'T1') { const m = /^([\d.e+-]+)/.exec(res.text); if (m) tsEmp.farVille = +Math.log10(Math.max(1e-6, +m[1]) / 1e-3).toFixed(2); }
+    else if (id === 'T3') { const m = /E\[D\]\s*([\d.]+)\s*s/.exec(res.text); if (m) tsEmp.d0_m0 = +(+m[1] / 2).toFixed(2); }
+    else if (id === 'T4') { const m = /gate por escore\s*([\d.]+)/.exec(res.text); if (m) tsEmp.farC6 = +Math.log10(Math.max(1e-5, +m[1]) / 3.9e-4).toFixed(2); }
+    else if (id === 'T5') { const m = /ingênuo\s*([\d.]+)\/h;\s*deflacionado\s*([\d.]+)\/h/.exec(res.text); if (m) { tsEmp.faphRaw = +Math.log10(Math.max(0.005, +m[1]) / 0.12).toFixed(2); tsEmp.faphDef = +Math.log10(Math.max(0.005, +m[2]) / 0.12).toFixed(2); } }
+    else if (id === 'T6') { const m = /FAPH\s*([\d.]+)/.exec(res.text); if (m) tsEmp.faphWh = +Math.log10(Math.max(0.005, +m[1]) / 0.12).toFixed(2); }
+    else if (id === 'T7') { const m = /E\[D\]\s*([\d.]+)\s*s/.exec(res.text); if (m) tsEmp.d0_m5 = +(+m[1] / 2).toFixed(2); }
+    else if (id === 'T8') { const m = /perda A\s*([\d.]+)\s*%,\s*B\s*([\d.]+)\s*%,\s*C\s*([\d.]+)\s*%;\s*fricção B\s*([\d.]+)\s*%,\s*C\s*([\d.]+)\s*%/.exec(res.text); if (m) { tsEmp.lossA = +m[1]; tsEmp.lossB = +m[2]; tsEmp.lossC = +m[3]; tsEmp.fricB = +m[4]; tsEmp.fricC = +m[5]; } }
+    if (currentTab === 'tests') renderTestCharts();
+  }
   // roda em Web Worker (motor sem DOM) para não travar a simulação e os sensores; cai para o thread principal se indisponível
   function tsWorker() {
     try {
@@ -2426,7 +3185,7 @@ const Recorder = (() => {
   $('#ts-run').addEventListener('click', async () => {
     const btn = $('#ts-run'); btn.disabled = true; tsInit(); const seed = +$('#ts-seed').value || 20261025; let pass = 0, n = 0; const t0 = performance.now();
     E.TESTS.forEach(t => { $('#ts-' + t.id).cells[4].textContent = 'rodando…'; });
-    const finish = () => { $('#ts-summary').textContent = pt(`${pass}/${E.TESTS.length} passaram em ${((performance.now() - t0) / 1000).toFixed(1)} s`); btn.disabled = false; };
+    const finish = () => { $('#ts-summary').textContent = pt(`${pass}/${E.TESTS.length} passaram em ${((performance.now() - t0) / 1000).toFixed(1)} s`); btn.disabled = false; renderTestCharts(); };
     const w = tsWorker();
     if (w) {
       w.onmessage = e => { if (e.data.done) { w.terminate(); finish(); return; } const { i, res, ms } = e.data; if (res.ok) pass++; n++; tsRow(i, res, ms); $('#ts-summary').textContent = pt(`${pass}/${n} passaram…`); };
@@ -2448,6 +3207,260 @@ const Recorder = (() => {
   tsInit();
 
   /* ============================================================ CORREÇÕES & COMO FUNCIONA ============================================================ */
+  const SM_DETAILS = {
+    s1: {
+      title: 'Estado 1: Ativo / Íntegro (§9.3, §22)',
+      badge: 'ok',
+      eq: 'Λ_k = ∑_{j=1}^k q_j ℓ_j < ln B_r · C_k = max(0, C_{k-1} − ℓ_k − ν) ≤ h',
+      desc: 'Sessão aberta sob uso do titular. Cada janela válida com captura física (q_k = 1) pontua ℓ_k > 0 em média (+μ nats). Ao atingir a parede ln B_r = ln(1/α_r), a sessão é <b>renovada</b> gastando a fatia α_r do orçamento total de 10⁻⁶ (Ville, Prop. 1).'
+    },
+    s2: {
+      title: 'Estado 2: Suspeita / Evidência Adversa (§9.3, §12)',
+      badge: 'warn',
+      eq: 'C_k = max(0, C_{k-1} − ℓ_k − ν) · φ_k = (φ_{k-1} + ϖ)/(1 − ϖ) · exp(−ℓ_k)',
+      desc: 'Mudança de portador ou alteração acentuada de postura. O CUSUM drena evidência adversa com margem ν = 0,3. O posterior de Shiryaev φ estima as chances de troca ter ocorrido. Transações de alto valor (ex: TED R$ 50 mil) são bloqueadas se φ > φ*(L).'
+    },
+    s3: {
+      title: 'Estado 3: Step-Up Face ID / PIN (§16, §22)',
+      badge: 'info',
+      eq: 'Disparado se C_k > h = 8,0 · φ_k > φ*(L) · S_k < S_min · ou Λ_k ≤ ln A = −4,6',
+      desc: 'Intervenção ativa por fator forte com entropia biométrica / credencial segura (FAR ≤ 10⁻⁶). Se o titular aprovar, C e φ são zerados e a sessão retorna a <b>Ativo</b> sem perda patrimonial. Se o impostor falhar ou expirar o tempo de resposta, vai para <b>Revogado</b>.'
+    },
+    s4: {
+      title: 'Estado 4: Sessão Revogada (§16, §22)',
+      badge: 'bad',
+      eq: 'Chave de sessão destruída · Falha fechada (fail-secure)',
+      desc: 'A sessão local e os tokens transitórios de autorização no servidor são revogados permanentemente para contenção de dano. Requer nova autenticação primária completa (Face ID + PIN + certificado) para restabelecer a posse.'
+    },
+    renov: {
+      title: 'Transição: Renovação de Ville (§9.3, Prop. 1)',
+      badge: 'ok',
+      eq: 'Λ_k ≥ ln B_r = ln(π² r² / (6 × 10⁻⁶)) ⇒ r ← r + 1, Λ_k ← 0',
+      desc: 'Pela desigualdade maximal de Ville, a probabilidade de um impostor atingir ln B_r em qualquer horizonte infinito é menor ou igual a α_r. Com a partição α_r = 6·10⁻⁶/(π² r²), o risco total acumulado por sessão é estritamente limitado a 10⁻⁶.'
+    },
+    cusum: {
+      title: 'Transição: Alarme CUSUM (§9.3, Tabela 10)',
+      badge: 'bad',
+      eq: 'C_k > h = 8,0 ⇒ Dispara Step-Up imediato (atraso médio E[D] ≈ 15,2 s)',
+      desc: 'Quando a evidência adversa acumulada cruza h = 8,0, o CUSUM detecta a troca de mãos com 96,9% de certeza em até 30 s. Sob o titular, a margem ν = 0,3 garante tempo médio entre falsos alarmes ARL₀ de centenas de passos (T11).'
+    },
+    ancilar: {
+      title: 'Portão Ancilar q_k vs Erro C6 (§7, §9.3)',
+      badge: 'warn',
+      eq: 'q_k = 1 se |a_lin| e |ω| indicam movimento voluntário; q_k = 0 na mesa',
+      desc: '<b>Regra de ouro: nunca selecione por escore ℓ_k</b>! O portão ancilar avalia apenas grandezas físicas auxiliares sem escore. Descartar janelas ruins pelo escore viola a condição de supermartingale e gera 99,98% de falsa aceitação (T4).'
+    }
+  };
+
+  function renderDocFigs() {
+    const svg1 = $('#dc-fig1-svg');
+    if (svg1) {
+      const thDeg = +($('#dc-f1-th') && $('#dc-f1-th').value || 25), th = thDeg * Math.PI / 180;
+      const gRatio = 0.20 * Math.cos(th), kRatio = Math.max(0.2, 1 - gRatio), fnHz = 9.5 * Math.sqrt(kRatio);
+      if ($('#dc-f1-th-v')) $('#dc-f1-th-v').textContent = `${thDeg}° · K_ef = ${kRatio.toFixed(2).replace('.', ',')} K_u (f_n ≈ ${fnHz.toFixed(1).replace('.', ',')} Hz)`;
+      const ox = 88, oy = 176, L = 122, cmL = 76, imuL = 104;
+      const tx = ox + L * Math.sin(th), ty = oy - L * Math.cos(th);
+      const cmx = ox + cmL * Math.sin(th), cmy = oy - cmL * Math.cos(th);
+      const imux = ox + imuL * Math.sin(th), imuy = oy - imuL * Math.cos(th);
+      const arcR = 52, ax = ox + arcR * Math.sin(th), ay = oy - arcR * Math.cos(th);
+      svg1.innerHTML = `
+        <defs>
+          <marker id="f1-arr" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="currentColor"/></marker>
+        </defs>
+        <line x1="18" y1="${oy}" x2="228" y2="${oy}" stroke="var(--line-strong)" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <line x1="${ox}" y1="${oy + 18}" x2="${ox}" y2="24" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4"/>
+        <text x="${ox - 28}" y="32" fill="var(--muted)" font-size="9.5" font-family="var(--mono)">+z_I</text>
+        ${thDeg > 2 ? `<path d="M ${ox} ${oy - arcR} A ${arcR} ${arcR} 0 0 1 ${ax.toFixed(1)} ${ay.toFixed(1)}" fill="none" stroke="var(--accent)" stroke-width="1.8"/><text x="${(ox + (ax - ox) * 0.55 - 8).toFixed(1)}" y="${(oy - arcR - 6).toFixed(1)}" fill="var(--accent)" font-size="9.5" font-weight="600" font-family="var(--mono)">ϑ=${thDeg}°</text>` : ''}
+        <line x1="${ox}" y1="${oy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="var(--ink)" stroke-width="8" stroke-linecap="round" opacity="0.20"/>
+        <line x1="${ox}" y1="${oy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
+        <circle cx="${ox}" cy="${oy}" r="6" fill="var(--card-solid)" stroke="var(--ink)" stroke-width="2.2"/>
+        <text x="${ox - 36}" y="${oy + 16}" fill="var(--ink-2)" font-size="9" font-family="var(--mono)">pivô O (K_u, C_u)</text>
+        <circle cx="${cmx.toFixed(1)}" cy="${cmy.toFixed(1)}" r="4.5" fill="var(--warn)"/>
+        <line x1="${cmx.toFixed(1)}" y1="${cmy.toFixed(1)}" x2="${cmx.toFixed(1)}" y2="${(cmy + 38).toFixed(1)}" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#f1-arr)"/>
+        <text x="${(cmx + 7).toFixed(1)}" y="${(cmy + 30).toFixed(1)}" fill="var(--warn)" font-size="9" font-weight="600" font-family="var(--mono)">m·g</text>
+        <circle cx="${imux.toFixed(1)}" cy="${imuy.toFixed(1)}" r="4" fill="var(--good)"/>
+        <text x="${(imux + 8).toFixed(1)}" y="${(imuy + 3).toFixed(1)}" fill="var(--good)" font-size="9" font-weight="600" font-family="var(--mono)">r_IMU</text>
+        <rect x="242" y="18" width="204" height="184" rx="10" fill="var(--bg-2)" stroke="var(--line)"/>
+        <text x="254" y="36" fill="var(--ink)" font-size="9.5" font-weight="700" font-family="var(--mono)">K_ef = K_u − mgl cosϑ (${(kRatio * 100).toFixed(0)}%)</text>
+        <text x="254" y="51" fill="var(--ink-2)" font-size="9" font-family="var(--mono)">a_cor = 2ω×v + ω×(ω×r_IMU)</text>
+        <line x1="258" y1="168" x2="432" y2="168" stroke="var(--line-strong)" stroke-width="1"/>
+        <line x1="258" y1="74" x2="258" y2="168" stroke="var(--line-strong)" stroke-width="1"/>
+        <path d="M 258 84 L 302 85 Q 318 86 330 108 L 415 162" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+        <line x1="312" y1="74" x2="312" y2="168" stroke="var(--good)" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="294" y="71" fill="var(--good)" font-size="8.5" font-family="var(--mono)">f_c=40Hz</text>
+        <line x1="406" y1="92" x2="406" y2="168" stroke="var(--bad)" stroke-width="2"/>
+        <circle cx="406" cy="158" r="3.5" fill="var(--bad)"/>
+        <text x="364" y="152" fill="var(--bad)" font-size="8.5" font-weight="600" font-family="var(--mono)">LRA 170Hz (−50dB)</text>
+        <text x="262" y="184" fill="var(--muted)" font-size="8.5" font-family="var(--mono)">C10: MEMS filtra portadora; resta envelope a 60 Hz</text>
+      `;
+    }
+    const cv2 = $('#dc-fig2-cv');
+    if (cv2) {
+      const c = +($('#dc-f2-c') && $('#dc-f2-c').value || 4), D = 10;
+      const rStar = E.ubmRadius(c, D);
+      if ($('#dc-f2-c-v')) $('#dc-f2-c-v').textContent = `c = ${c.toFixed(1).replace('.', ',')} → r* = ${rStar.toFixed(2).replace('.', ',')}`;
+      const rs = Array.from({ length: 33 }, (_, i) => i * 0.25);
+      const llrCent = rs.map(r => +(0.5 * D * Math.log(c) - 0.5 * (1 - 1 / c) * r * r).toFixed(2));
+      const llrV9 = rs.map(r => +(3.2 - 0.45 * r * r).toFixed(2));
+      const rIdx = Math.min(32, Math.max(0, Math.round(rStar / 0.25)));
+      chart(cv2, {
+        n: rs.length, yMin: -8, yMax: 8,
+        xLabels: [[0, 'r=0'], [8, 'r=2'], [16, 'r=4'], [24, 'r=6'], [32, 'r=8']],
+        hlines: [{ y: 0, color: cssVar('--muted'), label: 'ℓ = 0' }],
+        vlines: [{ x: rIdx, color: cssVar('--bad'), label: `r*=${rStar.toFixed(1)}` }],
+        zones: [{ idx0: 0, idx1: rIdx, color: 'rgba(255,59,48,.07)' }],
+        series: [
+          { name: 'UBM centrado (§11.3 falho)', data: llrCent, color: cssVar('--bad') },
+          { name: 'Prior declarado v9', data: llrV9, color: cssVar('--good'), fill: 'rgba(40,205,65,.09)' },
+        ],
+      });
+    }
+    const cv3 = $('#dc-fig3-cv');
+    if (cv3) {
+      const sgSel = +($('#dc-f3-sg') && $('#dc-f3-sg').value || 0.15);
+      const cur = E.impostorHetFactor(1e-6, 0, sgSel);
+      if ($('#dc-f3-sg-v')) $('#dc-f3-sg-v').textContent = `σ_m = ${sgSel.toFixed(2).replace('.', ',')} → ${cur.trunc.toFixed(2).replace('.', ',')}α / ${cur.rect.toFixed(2).replace('.', ',')}α / ${cur.half.toFixed(1).replace('.', ',')}α`;
+      const sgs = Array.from({ length: 21 }, (_, i) => +(0.05 + i * 0.01).toFixed(2));
+      const sIdx = Math.min(20, Math.max(0, Math.round((sgSel - 0.05) / 0.01)));
+      chart(cv3, {
+        n: sgs.length, yMin: 0,
+        xLabels: [[0, '0,05'], [10, '0,15 (T10)'], [15, '0,20'], [20, '0,25']],
+        vlines: [{ x: sIdx, color: cssVar('--accent'), label: `σ_m=${sgSel.toFixed(2).replace('.', ',')}` }],
+        series: [
+          { name: 'Truncada (−∞,1)', data: sgs.map(s => +Math.min(120, E.impostorHetFactor(1e-6, 0, s).trunc).toFixed(2)), color: cssVar('--accent'), dots: true },
+          { name: 'Retificada max(0,m)', data: sgs.map(s => +Math.min(120, E.impostorHetFactor(1e-6, 0, s).rect).toFixed(2)), color: cssVar('--warn') },
+          { name: 'Meia-normal [0,1)', data: sgs.map(s => +Math.min(120, E.impostorHetFactor(1e-6, 0, s).half).toFixed(2)), color: cssVar('--bad') },
+        ],
+      });
+    }
+
+    // Fig. 4 · Máquina de Estados da Sessão Sequencial (§7, §9.3, §16, §22)
+    const svg4 = $('#dc-fig4-svg');
+    if (svg4) {
+      svg4.innerHTML = `
+        <defs>
+          <marker id="sm-arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--muted)"/></marker>
+          <marker id="sm-arr-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--good)"/></marker>
+          <marker id="sm-arr-w" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--warn)"/></marker>
+          <marker id="sm-arr-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--bad)"/></marker>
+          <marker id="sm-arr-i" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--info)"/></marker>
+        </defs>
+        <g font-family="var(--sans)" font-size="10" cursor="pointer">
+          <!-- Transição loop renovação Ville -->
+          <path d="M 45 68 C 45 22, 95 22, 95 68" fill="none" stroke="var(--good)" stroke-width="1.8" marker-end="url(#sm-arr-g)" data-sm="renov"/>
+          <text x="70" y="24" text-anchor="middle" font-size="9" font-weight="700" fill="var(--good)" data-sm="renov">Renovação Ville Λ ≥ ln B_r</text>
+
+          <!-- Nó 1: Ativo -->
+          <g data-sm="s1">
+            <rect x="18" y="72" width="108" height="64" rx="10" fill="var(--panel2)" stroke="var(--good)" stroke-width="2"/>
+            <text x="72" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--fg)">1. ATIVO</text>
+            <text x="72" y="109" text-anchor="middle" font-size="9" fill="var(--muted)">Sessão íntegra</text>
+            <text x="72" y="124" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--good)">Λ &lt; ln B_r · C ≤ h</text>
+          </g>
+
+          <!-- Transição Ativo -> Suspeita -->
+          <path d="M 126 92 L 150 92" fill="none" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#sm-arr-w)" data-sm="s2"/>
+          <text x="138" y="85" text-anchor="middle" font-size="8.5" fill="var(--warn)" data-sm="s2">ℓ_k &lt; 0</text>
+
+          <!-- Transição Suspeita -> Ativo (retomada) -->
+          <path d="M 152 118 L 128 118" fill="none" stroke="var(--good)" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#sm-arr-g)" data-sm="s1"/>
+          <text x="140" y="130" text-anchor="middle" font-size="8.5" fill="var(--good)" data-sm="s1">retoma</text>
+
+          <!-- Nó 2: Suspeita -->
+          <g data-sm="s2">
+            <rect x="154" y="72" width="108" height="64" rx="10" fill="var(--panel2)" stroke="var(--warn)" stroke-width="1.8"/>
+            <text x="208" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--fg)">2. SUSPEITA</text>
+            <text x="208" y="109" text-anchor="middle" font-size="9" fill="var(--muted)">Troca de mãos?</text>
+            <text x="208" y="124" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--warn)">CUSUM C_k &gt; 0</text>
+          </g>
+
+          <!-- Transição Suspeita -> Step-Up (CUSUM ou valor) -->
+          <path d="M 262 104 L 286 104" fill="none" stroke="var(--bad)" stroke-width="2" marker-end="url(#sm-arr-b)" data-sm="cusum"/>
+          <text x="274" y="97" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--bad)" data-sm="cusum">C &gt; h</text>
+
+          <!-- Nó 3: Step-Up -->
+          <g data-sm="s3">
+            <rect x="290" y="72" width="112" height="64" rx="10" fill="var(--panel2)" stroke="var(--info)" stroke-width="2"/>
+            <text x="346" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--fg)">3. STEP-UP</text>
+            <text x="346" y="109" text-anchor="middle" font-size="9" fill="var(--info)">Face ID / PIN</text>
+            <text x="346" y="124" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--muted)">FAR ≤ 10⁻⁶</text>
+          </g>
+
+          <!-- Retorno Step-Up -> Ativo (dono aprovado) -->
+          <path d="M 346 136 C 346 195, 72 195, 72 138" fill="none" stroke="var(--good)" stroke-width="1.8" marker-end="url(#sm-arr-g)" data-sm="s1"/>
+          <text x="208" y="185" text-anchor="middle" font-size="9" font-weight="600" fill="var(--good)" data-sm="s1">Dono aprovado: C ← 0, φ ← 0, retorna a Ativo</text>
+
+          <!-- Transição Step-Up -> Revogado -->
+          <path d="M 402 104 L 430 104" fill="none" stroke="var(--bad)" stroke-width="1.8" marker-end="url(#sm-arr-b)" data-sm="s4"/>
+          <text x="416" y="97" text-anchor="middle" font-size="8.5" fill="var(--bad)" data-sm="s4">falha</text>
+
+          <!-- Nó 4: Revogado -->
+          <g data-sm="s4">
+            <rect x="434" y="72" width="88" height="64" rx="10" fill="var(--panel2)" stroke="var(--bad)" stroke-width="2"/>
+            <text x="478" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--bad)">4. BLOQUEIO</text>
+            <text x="478" y="109" text-anchor="middle" font-size="9" fill="var(--muted)">Revogado</text>
+            <text x="478" y="124" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--bad)">perda evitada</text>
+          </g>
+
+          <!-- Portão Ancilar físico q_k loop à esquerda -->
+          <path d="M 18 104 C -6 104, -6 130, 16 126" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#sm-arr)" data-sm="ancilar"/>
+          <text x="14" y="148" font-size="8.5" fill="var(--muted)" data-sm="ancilar">q_k = 0 (mesa)</text>
+        </g>
+      `;
+      const updateDetail = key => {
+        const item = SM_DETAILS[key] || SM_DETAILS.s1;
+        const det = $('#dc-fig4-detail');
+        if (det) {
+          det.className = 'note ' + (item.badge || 'info');
+          det.innerHTML = `<b>${item.title}</b><div style="font-family:var(--mono);font-size:.78rem;margin:3px 0 2px;color:var(--fg)">${esc(item.eq)}</div><div>${item.desc}</div>`;
+        }
+      };
+      $$('[data-sm]', svg4).forEach(el => {
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          updateDetail(el.dataset.sm);
+        });
+      });
+    }
+
+    // Fig. 5 · Paradoxo de Martingale e Portão Ancilar (Regra C6)
+    const cv5 = $('#dc-fig5-cv');
+    if (cv5) {
+      const mode = ($('#dc-f5-gate') && $('#dc-f5-gate').value) || 'ancilar';
+      const nSteps = 28;
+      const lnBound = Math.log(1000); // 6.9077 nats (teto ln(1000))
+      let dataLam = [], faTxt = '';
+      if (mode === 'ancilar') {
+        faTxt = 'Portão Ancilar q_k (v9) → FA = 3,9×10⁻⁴ (seguro)';
+        dataLam = Array.from({ length: nSteps }, (_, i) => +(0 - (i * 0.55) + 0.3 * Math.sin(i * 1.2)).toFixed(2));
+      } else if (mode === 'score_05') {
+        faTxt = 'Erro C6 (ℓ > −0,5) → FA = 0,9998 (colapso 99,98%)';
+        dataLam = Array.from({ length: nSteps }, (_, i) => +(Math.min(9.5, 0.4 + i * 0.48 + 0.2 * Math.cos(i))).toFixed(2));
+      } else {
+        faTxt = 'Erro C6 Severo (ℓ > 0) → FA = 1,0000 (100% falha)';
+        dataLam = Array.from({ length: nSteps }, (_, i) => +(Math.min(9.5, 0.8 + i * 0.72)).toFixed(2));
+      }
+      if ($('#dc-f5-gate-v')) $('#dc-f5-gate-v').textContent = faTxt;
+      chart(cv5, {
+        n: nSteps, yMin: -10, yMax: 10,
+        xLabels: [[0, 'passo 0'], [7, 'passo 7'], [14, 'passo 14'], [21, 'passo 21'], [27, 'passo 27']],
+        hlines: [
+          { y: 0, color: cssVar('--muted'), label: 'Λ = 0' },
+          { y: lnBound, color: cssVar('--bad'), label: 'ln(10³) = 6,91' },
+        ],
+        zones: [
+          { idx0: 0, idx1: nSteps - 1, color: mode === 'ancilar' ? 'rgba(34, 197, 94, 0.06)' : 'rgba(239, 68, 68, 0.10)' }
+        ],
+        series: [
+          { name: mode === 'ancilar' ? 'Trajetória sob q_k ancilar (Ville preservado)' : 'Trajetória com corte por escore (Violação C6)', data: dataLam, color: mode === 'ancilar' ? cssVar('--good') : cssVar('--bad'), fill: true },
+        ],
+      });
+    }
+  }
+  ['#dc-f1-th', '#dc-f2-c', '#dc-f3-sg', '#dc-f5-gate'].forEach(id => {
+    const el = $(id);
+    if (el) { el.addEventListener('input', renderDocFigs); el.addEventListener('change', renderDocFigs); }
+  });
   const VERDICTS = [
     ['C1 · cota média sob impostores heterogêneos (§9.4)', 'MGF da normal truncada: 8,56α (−∞,1), 8,90α retificado, 16,8α meia-normal [0,1); a v7 trazia 7,9α.', 'ok', 'Aceito e conferido: a forma fechada entra no v9; T10 reproduz 8,56 / 8,90 / 16,80 por fórmula e por integração numérica. Os 7,9α só saem de um truncamento simétrico em [−0,52; 0,52], que não é o modelo enunciado.'],
     ['C2 · raio do UBM centrado no titular (§11.3)', 'Trocar √(2c ln c/(c−1)) σ_G por √(D c ln c/(c−1)) em distância de Mahalanobis.', 'v8', 'Já estava na v8 (marca v8 C3): r*(c,D) = √(D c ln c/(c−1)); para c=4, D=10, r* ≈ 4,3 contém ≈95 % da massa genuína. O painel antigo cometia exatamente esse erro; o novo usa prior declarado ou coorte medida.'],
@@ -2491,12 +3504,12 @@ const Recorder = (() => {
     </div>`;
 
   /* ---------- redraw / init ---------- */
-  function redrawAll() { if (currentTab === 'collect') clSignals(); if (currentTab === 'live') liveRender(); if (currentTab === 'sensor') { snRender(); snRenderSignals(); } }
+  function redrawAll() { if (currentTab === 'collect') clSignals(); if (currentTab === 'live') liveRender(); if (currentTab === 'sensor') { snRender(); snRenderSignals(); } if (currentTab === 'tests') renderTestCharts(); if (currentTab === 'docs') renderDocFigs(); }
   window.addEventListener('resize', () => requestAnimationFrame(redrawAll));
   buildControls(); liveReset(); liveTimer();
   ['#lv-badge', '#sn-badge', '#ts-summary', '#lv-stepup', '#sn-stepup', '#cl-state'].forEach(id => $(id).setAttribute('aria-live', 'polite'));
   $$('canvas.chart').forEach(c => { c.setAttribute('role', 'img'); c.setAttribute('aria-label', (c.previousElementSibling && c.previousElementSibling.textContent || 'gráfico').trim().slice(0, 120)); });
-  snSupport(); snButtons(); snRender();
+  snSupport(); snButtons(); snRender(); renderTestCharts(); renderDocFigs();
   clInit();
   let savedTab = 'collect'; try { savedTab = localStorage.getItem('painel_tab') || 'collect'; } catch {}
   showTab(savedTab);
