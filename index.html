@@ -277,10 +277,52 @@ footer{color:var(--muted);font-size:.75rem;text-align:center;padding:6px 8px 0;l
 .recitem .meta{grid-column:1/2;font-size:.76rem;color:var(--muted);font-family:var(--mono)}
 .recitem .acts{grid-column:2/3;grid-row:1/3;display:flex;gap:6px}
 dialog{border:0;padding:0;background:transparent;color:var(--fg);max-width:min(440px,calc(100vw - 24px));width:100%}
-dialog::backdrop{background:rgba(5,10,18,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+dialog:modal{overscroll-behavior:contain}
+dialog::backdrop{background:rgba(5,10,18,.52);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:hidden;overscroll-behavior:contain}
 .sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:var(--r-l);padding:18px;box-shadow:var(--shadow-2)}
 .stack{display:grid;gap:8px;margin-top:14px}
 .stack .btn{min-height:var(--tap);width:100%}
+
+/* ---------- guia rápido ("Como usar" / onboarding modal) ---------- */
+.helpbtn{display:inline-flex;align-items:center;gap:5px;border:.5px solid var(--line2);background:var(--panel2);color:var(--fg2);border-radius:999px;padding:4px 10px;min-height:28px;font:600 .76rem var(--sans);cursor:pointer;transition:background .15s,color .15s,border-color .15s;touch-action:manipulation;white-space:nowrap}
+.helpbtn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.helpbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)}
+.guide-sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:24px;padding:20px 20px 18px;box-shadow:var(--shadow-2);display:grid;gap:14px;max-height:min(88dvh,740px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.guide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.guide-head .kicker{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px;margin-bottom:6px}
+.guide-head h2{font:700 1.18rem/1.2 var(--display);margin:0;letter-spacing:-.02em}
+.guide-close{flex:0 0 32px;width:32px;height:32px;border-radius:50%;border:.5px solid var(--line2);background:var(--panel2);color:var(--muted);display:grid;place-items:center;cursor:pointer;font-size:1rem;line-height:1;padding:0;touch-action:manipulation}
+.guide-close:hover{color:var(--fg);background:var(--bg2)}
+.guide-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:3px;border-radius:12px;background:var(--bg2);border:.5px solid var(--line2)}
+.guide-nav button{border:0;background:transparent;color:var(--muted);padding:6px 4px;min-height:32px;border-radius:9px;font:600 .75rem var(--sans);cursor:pointer;transition:all .18s var(--ease);touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.guide-nav button[aria-selected="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.1),0 0 0 .5px var(--line)}
+.guide-slide{display:grid;gap:11px;animation:fade .2s var(--ease)}
+.guide-lead{font-size:.88rem;color:var(--fg2);line-height:1.48;margin:0}
+.guide-cards{display:grid;gap:8px}
+.guide-card{display:grid;grid-template-columns:36px 1fr;gap:11px;align-items:start;padding:11px 12px;border-radius:var(--r-m);background:var(--panel2);border:.5px solid var(--line2)}
+.guide-card.jump{cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit;transition:border-color .15s,transform .1s,background .15s}
+.guide-card.jump:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 45%,var(--panel2))}
+.guide-card.jump:active{transform:scale(.985)}
+.guide-ico{width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 .88rem var(--mono)}
+.guide-ico.rec{background:var(--bad-soft);color:var(--bad)}
+.guide-ico.good{background:var(--good-soft);color:var(--good)}
+.guide-ico.warn{background:var(--warn-soft);color:var(--warn)}
+.guide-ico.info{background:var(--info-soft);color:var(--info)}
+.guide-ico svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.guide-card b{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:.87rem;color:var(--fg);margin-bottom:2px}
+.guide-card b .go{font-size:.73rem;font-weight:600;color:var(--accent)}
+.guide-card span{display:block;font-size:.8rem;color:var(--muted);line-height:1.42}
+.guide-pills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.guide-pill{padding:10px 11px;border-radius:var(--r-s);background:var(--panel2);border:.5px solid var(--line2);display:grid;gap:3px}
+.guide-pill strong{font:700 .86rem var(--mono);color:var(--fg);display:flex;align-items:center;gap:6px}
+.guide-pill strong i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.guide-pill small{font-size:.76rem;color:var(--muted);line-height:1.36}
+.guide-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:8px;border-top:.5px solid var(--line2);flex-wrap:wrap}
+.guide-dots{display:inline-flex;gap:6px;align-items:center}
+.guide-dots i{width:7px;height:7px;border-radius:999px;background:var(--line2);transition:all .2s var(--ease)}
+.guide-dots i.on{width:18px;background:var(--accent)}
+.guide-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
 
 /* ---------- iPhone & telas compactas ---------- */
 @media (max-width:760px){
@@ -310,7 +352,11 @@ dialog::backdrop{background:rgba(5,10,18,.5);-webkit-backdrop-filter:blur(6px);b
   .recitem .acts{grid-column:1;grid-row:auto;margin-top:6px}
   .recitem .acts .btn{flex:1}
   dialog{margin:auto auto 0;max-width:100vw}
-  .sheet{border-radius:22px 22px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  dialog.guide{max-width:100vw;max-height:92dvh}
+  .sheet,.guide-sheet{border-radius:22px 22px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  .guide-sheet{max-height:92dvh;padding:18px 15px calc(18px + env(safe-area-inset-bottom))}
+  .guide-pills{grid-template-columns:1fr}
+  .helpbtn{padding:4px 9px;font-size:.73rem}
 }
 @container (width < 700px){
   #dc-table thead,#ts-table thead{display:none}
@@ -340,6 +386,7 @@ dialog::backdrop{background:rgba(5,10,18,.5);-webkit-backdrop-filter:blur(6px);b
     <div class="brandtxt"><h1>IMU Auth</h1><div class="sub">coleta inercial · painel do preprint v9</div></div>
   </div>
   <button class="recchip" id="rec-chip" hidden aria-label="Gravação em andamento: abrir Coletar"><span class="dot"></span><span id="rec-chip-t">00:00</span></button>
+  <button class="helpbtn" id="btn-guide" type="button" aria-label="Abrir guia rápido: Como usar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.4 9.2a2.6 2.6 0 113.8 2.3c-.9.5-1.2 1-1.2 2"/><circle cx="12" cy="17" r=".8" fill="currentColor" stroke="none"/></svg><span>Como usar</span></button>
   <div class="seg theme" id="theme" aria-label="Tema">
     <button data-mode="auto" aria-pressed="true" title="Automático">Auto</button><button data-mode="light" aria-pressed="false" title="Claro">Claro</button><button data-mode="dark" aria-pressed="false" title="Escuro">Escuro</button>
   </div>
@@ -646,6 +693,118 @@ dialog::backdrop{background:rgba(5,10,18,.5);-webkit-backdrop-filter:blur(6px);b
 </section>
 
 <footer>Painel de modelo: números do simulador e dos testes são simulações sob o modelo declarado no preprint v9; validação empírica segue a §23. Arquivo único, sem dependências, funciona offline.</footer>
+
+<dialog id="guide-dialog" class="guide" closedby="any" aria-labelledby="guide-title">
+  <div class="guide-sheet">
+    <div class="guide-head">
+      <div>
+        <span class="kicker">Guia interativo · Preprint v9</span>
+        <h2 id="guide-title">Como usar o IMU Auth</h2>
+      </div>
+      <button type="button" class="guide-close" id="guide-x" aria-label="Fechar guia">✕</button>
+    </div>
+
+    <div class="guide-nav" role="tablist" aria-label="Etapas do guia">
+      <button type="button" role="tab" aria-selected="true" data-gstep="0">1. Visão geral</button>
+      <button type="button" role="tab" aria-selected="false" data-gstep="1">2. Coleta IMU</button>
+      <button type="button" role="tab" aria-selected="false" data-gstep="2">3. Ao vivo</button>
+      <button type="button" role="tab" aria-selected="false" data-gstep="3">4. Indicadores</button>
+    </div>
+
+    <!-- Passo 1: Visão geral -->
+    <div class="guide-slide" data-gpanel="0">
+      <p class="guide-lead">O <b>IMU Auth v9</b> protege a sessão <i>após</i> o desbloqueio inicial (Face ID / senha), usando micro-movimentos da mão (acelerômetro + giroscópio) a cada <b>2 segundos</b>. Toque em qualquer módulo para ir direto a ele:</p>
+      <div class="guide-cards">
+        <button type="button" class="guide-card jump" data-goto="collect">
+          <span class="guide-ico rec"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none"/></svg></span>
+          <div><b>1. Coletar (iPhone) <span class="go">Abrir →</span></b><span>Grave sessões reais do sensor inercial bruto no Safari, rotule trocas de mão/postura e exporte CSV + JSON via AirDrop.</span></div>
+        </button>
+        <button type="button" class="guide-card jump" data-goto="sensor">
+          <span class="guide-ico"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.5 18.5h3"/></svg></span>
+          <div><b>2. Sensores (Biometria ao Vivo) <span class="go">Abrir →</span></b><span>Cadastre seu padrão biomecânico em 1 min (30 janelas), entregue o celular a outra pessoa e veja o alarme disparar.</span></div>
+        </button>
+        <button type="button" class="guide-card jump" data-goto="live">
+          <span class="guide-ico info"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 4-7 5 6"/><path d="M3 21h18"/></svg></span>
+          <div><b>3. Simulador (Ataques &amp; Pix) <span class="go">Abrir →</span></b><span>Simule roubo com o aparelho aberto, teste transações de R$ 50 a R$ 50 mil e explore o erro de seleção C6.</span></div>
+        </button>
+        <button type="button" class="guide-card jump" data-goto="tests">
+          <span class="guide-ico good"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 006.2 21h11.6a2 2 0 001.7-2.5L14 9V3"/><path d="M7.5 15h9"/></svg></span>
+          <div><b>4. Testes &amp; Auditoria <span class="go">Abrir →</span></b><span>Rode os 12 testes Monte Carlo com semente fixa no navegador para reproduzir todas as tabelas do artigo.</span></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Passo 2: Coleta de Campo -->
+    <div class="guide-slide" data-gpanel="1" hidden>
+      <p class="guide-lead">Para gravar dados reais do acelerômetro e giroscópio no iPhone sem perdas nem lacunas:</p>
+      <div class="guide-cards">
+        <div class="guide-card">
+          <span class="guide-ico">1</span>
+          <div><b>Abra no Safari via HTTPS e toque em Gravar</b><span>Conceda a permissão <i>Movimento e Orientação</i>. A tela permanece acesa automaticamente (Wake Lock).</span></div>
+        </div>
+        <div class="guide-card">
+          <span class="guide-ico warn">2</span>
+          <div><b>Rotule em tempo real durante o uso</b><span>Alterne entre <b>Titular</b>, <b>Outra pessoa</b> e <b>Apoiado</b> no exato instante da troca. Os rótulos são salvos como eventos e nunca enviesam o escore (regra C6).</span></div>
+        </div>
+        <div class="guide-card">
+          <span class="guide-ico good">3</span>
+          <div><b>Pare e Exporte por AirDrop</b><span>Os dados ficam seguros no IndexedDB do aparelho. Toque em <b>Exportar</b> para compartilhar o pacote completo (amostras `.csv`, eventos `.csv` e `.json`).</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passo 3: Sensores & Simulador -->
+    <div class="guide-slide" data-gpanel="2" hidden>
+      <p class="guide-lead">Você pode testar o motor estatístico tanto com <b>seus próprios movimentos</b> quanto no <b>simulador acelerado</b>:</p>
+      <div class="guide-cards">
+        <div class="guide-card">
+          <span class="guide-ico">A</span>
+          <div><b>Na aba Sensores (teste físico em 3 passos)</b><span>1) Toque em <b>Ativar sensores</b> e depois em <b>Iniciar cadastro</b> (use o celular por ~1 min). 2) Com o monitoramento ativo, entregue o aparelho a outra pessoa. 3) Veja <b>C (CUSUM)</b> subir e bloquear o Pix!</span></div>
+        </div>
+        <div class="guide-card">
+          <span class="guide-ico info">B</span>
+          <div><b>Na aba Simulador (sem precisar de sensores)</b><span>Clique em <b>Entregar a outra pessoa</b> e tente executar um <b>Pix R$ 50</b> vs. <b>TED R$ 50.000</b>. Arraste o celular 3D para inspecionar os vetores cinemáticos (g, ĝ, ω, a_lin).</span></div>
+        </div>
+        <div class="guide-card">
+          <span class="guide-ico rec">!</span>
+          <div><b>Experimento recomendado: Erro C6</b><span>Em <i>Controles da simulação</i>, ative o interruptor vermelho <b>erro C6</b> para ver como descartar janelas ruins pelo escore faz o impostor passar por dono.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passo 4: Como ler as 4 métricas -->
+    <div class="guide-slide" data-gpanel="3" hidden>
+      <p class="guide-lead">A cada janela de 2 s, o motor extrai a razão de log-verossimilhança <b>ℓ_k</b> (verde = dono, vermelho = impostor) e atualiza 4 guardiões:</p>
+      <div class="guide-pills">
+        <div class="guide-pill">
+          <strong><i style="background:var(--info)"></i>Λ · SPRT (Ville)</strong>
+          <small>Soma ℓ_k para renovar a confiança em ln B_r gastando uma fatia α_r do orçamento de 10⁻⁶. Se cair a −4,6, exige step-up.</small>
+        </div>
+        <div class="guide-pill">
+          <strong><i style="background:var(--warn)"></i>C · CUSUM (Troca)</strong>
+          <small>Acumula apenas evidência negativa pós-troca. Quando C &gt; h (8,0), dispara step-up em ~15 s mesmo após horas de uso do dono.</small>
+        </div>
+        <div class="guide-pill">
+          <strong><i style="background:var(--violet)"></i>φ · Shiryaev (Valor)</strong>
+          <small>Chances de a posse já ter mudado. Bloqueia ações caras (TED R$ 50 mil exige φ &lt; 2×10⁻⁵) antes mesmo do alarme global.</small>
+        </div>
+        <div class="guide-pill">
+          <strong><i style="background:var(--good)"></i>q_k · Portão Ancilar</strong>
+          <small>Abstém janelas (q = 0) quando o celular está na mesa ou sem amostras — olhando só a captura física, nunca o escore ℓ_k.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-foot">
+      <div class="guide-dots" id="guide-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="guide-actions">
+        <button type="button" class="btn sm" id="guide-prev" hidden>Anterior</button>
+        <button type="button" class="btn sm primary" id="guide-next">Próximo</button>
+        <button type="button" class="btn sm primary" id="guide-done" hidden autofocus>Começar a usar</button>
+      </div>
+    </div>
+  </div>
+</dialog>
 </main>
 <script id="engine-js">
 /* ============================================================
@@ -2343,6 +2502,48 @@ const Recorder = (() => {
   clInit();
   let savedTab = 'collect'; try { savedTab = localStorage.getItem('painel_tab') || 'collect'; } catch {}
   showTab(savedTab);
+
+  /* ---------- guia rápido ("Como usar" / onboarding) ---------- */
+  const gDlg = $('#guide-dialog');
+  let gStep = 0;
+  const G_MAX = 3;
+  function setGuideStep(idx) {
+    gStep = Math.max(0, Math.min(G_MAX, idx));
+    $$('[data-gstep]', gDlg).forEach(b => b.setAttribute('aria-selected', String(+b.dataset.gstep === gStep)));
+    $$('[data-gpanel]', gDlg).forEach(p => { p.hidden = +p.dataset.gpanel !== gStep; });
+    $$('#guide-dots i').forEach((d, i) => d.classList.toggle('on', i === gStep));
+    $('#guide-prev').hidden = gStep === 0;
+    $('#guide-next').hidden = gStep === G_MAX;
+    $('#guide-done').hidden = gStep !== G_MAX;
+  }
+  function openGuide(step = 0) {
+    setGuideStep(step);
+    openDialog(gDlg);
+  }
+  function finishGuide() {
+    try { localStorage.setItem('imu_guide_seen_v9', '1'); } catch {}
+    closeDialog(gDlg);
+  }
+  $('#btn-guide').addEventListener('click', () => openGuide(0));
+  $('#guide-x').addEventListener('click', finishGuide);
+  $('#guide-done').addEventListener('click', finishGuide);
+  $('#guide-prev').addEventListener('click', () => setGuideStep(gStep - 1));
+  $('#guide-next').addEventListener('click', () => setGuideStep(gStep + 1));
+  $$('[data-gstep]', gDlg).forEach(b => b.addEventListener('click', () => setGuideStep(+b.dataset.gstep)));
+  $$('[data-goto]', gDlg).forEach(b => b.addEventListener('click', () => { const target = b.dataset.goto; finishGuide(); showTab(target); }));
+  gDlg.addEventListener('close', () => { try { localStorage.setItem('imu_guide_seen_v9', '1'); } catch {} gDlg.returnValue = ''; });
+  if (!('closedBy' in HTMLDialogElement.prototype)) {
+    gDlg.addEventListener('click', event => {
+      if (event.target !== gDlg) return;
+      const rect = gDlg.getBoundingClientRect();
+      const isDialogContent = rect.top <= event.clientY && event.clientY <= rect.top + rect.height && rect.left <= event.clientX && event.clientX <= rect.left + rect.width;
+      if (isDialogContent) return;
+      finishGuide();
+    });
+  }
+  let guideSeen = false; try { guideSeen = localStorage.getItem('imu_guide_seen_v9') === '1'; } catch {}
+  if (!guideSeen) setTimeout(() => openGuide(0), 120);
+
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
   }
