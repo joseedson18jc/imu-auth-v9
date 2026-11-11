@@ -1,4 +1,4 @@
-const CACHE_NAME = 'imu-auth-v9-cache-v3';
+const CACHE_NAME = 'imu-auth-v9-cache-v4';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', event => {
