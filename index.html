@@ -230,6 +230,12 @@ canvas.chart.tall{height:196px}
 .fig-box{background:var(--panel2);border:.5px solid var(--line2);border-radius:var(--r-m);padding:13px;display:grid;gap:8px;align-content:start;min-width:0}
 .fig-box h3{margin:0;color:var(--fg);font-size:.82rem;text-transform:none;letter-spacing:-.01em;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .fig-cap{font-size:.77rem;color:var(--muted);line-height:1.42;margin:0}
+#dc-box-fig4,#dc-box-fig5{grid-column:1 / -1}
+[data-sm]{transition:all .18s var(--ease);outline:none;cursor:pointer}
+[data-sm]:hover{filter:brightness(1.15)}
+[data-sm]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[data-sm].sm-active rect{stroke:var(--accent)!important;stroke-width:3px!important;filter:drop-shadow(0 0 6px var(--accent))}
+[data-sm].sm-active path{stroke:var(--accent)!important;stroke-width:3.2px!important;filter:drop-shadow(0 0 6px var(--accent))}
 
 /* ---------- log ---------- */
 .log{list-style:none;margin:0;padding:0;font-size:.82rem;max-height:220px;overflow:auto;display:grid;gap:2px;-webkit-overflow-scrolling:touch}
@@ -308,16 +314,17 @@ dialog[open]::backdrop{background:rgba(5,10,18,.52);@starting-style{background:r
 .helpbtn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .helpbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)}
-.guide-sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:24px;padding:20px 20px 18px;box-shadow:var(--shadow-2);display:grid;gap:14px;max-height:min(88dvh,740px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:relative}
-.guide-head{position:sticky;top:-20px;z-index:20;background:color-mix(in srgb,var(--panel) 84%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);margin:-20px -20px 0;padding:18px 20px 12px;border-bottom:.5px solid var(--line2);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.guide-head .kicker{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px;margin-bottom:6px}
+.guide-sheet{background:var(--panel);border:.5px solid var(--line2);border-radius:24px;box-shadow:var(--shadow-2);display:flex;flex-direction:column;max-height:min(88dvh,740px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:relative;padding:0}
+.guide-header-sticky{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--panel) 88%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:.5px solid var(--line2);padding:18px 20px 12px;display:grid;gap:10px}
+.guide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.guide-head .kicker{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px;margin-bottom:4px}
 .guide-head h2{font:700 1.18rem/1.2 var(--display);margin:0;letter-spacing:-.02em}
 .guide-close{flex:0 0 32px;width:32px;height:32px;border-radius:50%;border:.5px solid var(--line2);background:var(--panel2);color:var(--muted);display:grid;place-items:center;cursor:pointer;font-size:1rem;line-height:1;padding:0;touch-action:manipulation}
 .guide-close:hover{color:var(--fg);background:var(--bg2)}
 .guide-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:3px;border-radius:12px;background:var(--bg2);border:.5px solid var(--line2)}
 .guide-nav button{border:0;background:transparent;color:var(--muted);padding:6px 4px;min-height:32px;border-radius:9px;font:600 .75rem var(--sans);cursor:pointer;transition:all .18s var(--ease);touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide-nav button[aria-selected="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.1),0 0 0 .5px var(--line)}
-.guide-slide{display:grid;gap:11px;animation:fade .2s var(--ease)}
+.guide-slide{padding:16px 20px;display:grid;gap:11px;animation:fade .2s var(--ease);flex:1 0 auto}
 .guide-lead{font-size:.88rem;color:var(--fg2);line-height:1.48;margin:0}
 .guide-cards{display:grid;gap:8px}
 .guide-card{display:grid;grid-template-columns:36px 1fr;gap:11px;align-items:start;padding:11px 12px;border-radius:var(--r-m);background:var(--panel2);border:.5px solid var(--line2)}
@@ -338,7 +345,7 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
 .guide-pill strong{font:700 .86rem var(--mono);color:var(--fg);display:flex;align-items:center;gap:6px}
 .guide-pill strong i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .guide-pill small{font-size:.76rem;color:var(--muted);line-height:1.36}
-.guide-foot{position:sticky;bottom:-18px;z-index:20;background:color-mix(in srgb,var(--panel) 84%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);margin:0 -20px -18px;padding:12px 20px 18px;border-top:.5px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.guide-foot{position:sticky;bottom:0;z-index:20;background:color-mix(in srgb,var(--panel) 88%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);padding:12px 20px max(16px,env(safe-area-inset-bottom));border-top:.5px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:auto}
 .guide-dots{display:inline-flex;gap:6px;align-items:center}
 .guide-dots i{width:7px;height:7px;border-radius:999px;background:var(--line2);transition:all .2s var(--ease)}
 .guide-dots i.on{width:18px;background:var(--accent)}
@@ -375,10 +382,11 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
   .recitem .acts .btn{flex:1}
   dialog{margin:auto auto 0;max-width:100vw}
   dialog.guide{max-width:100vw;max-height:92dvh;width:100vw;margin:auto auto 0}
-  .sheet,.guide-sheet{border-radius:22px 22px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
-  .guide-sheet{max-height:92dvh;height:92dvh;padding:18px 15px calc(18px + env(safe-area-inset-bottom));overflow-y:auto}
-  .guide-head{top:-18px;margin:-18px -15px 0;padding:14px 15px 10px}
-  .guide-foot{bottom:calc(-18px - env(safe-area-inset-bottom));margin:0 -15px calc(-18px - env(safe-area-inset-bottom));padding:10px 15px calc(14px + env(safe-area-inset-bottom))}
+  .sheet{border-radius:22px 22px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  .guide-sheet{border-radius:22px 22px 0 0;max-height:92dvh;height:92dvh;padding:0;overflow-y:auto}
+  .guide-header-sticky{top:0;padding:calc(env(safe-area-inset-top) + 12px) 15px 10px}
+  .guide-slide{padding:14px 15px}
+  .guide-foot{bottom:0;padding:10px 15px calc(14px + env(safe-area-inset-bottom))}
   .guide-pills{grid-template-columns:1fr}
   .helpbtn{padding:4px 9px;font-size:.73rem}
   .grid.g2,.grid.g3,.grid.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));min-width:0;max-width:100%}
@@ -598,8 +606,12 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
       <h2>Modelo de evidência</h2>
       <dl class="kv" id="sn-model"></dl>
       <label class="toggle" style="margin-top:10px"><input type="checkbox" id="sn-tremor"> incluir tremor bruto (não normalizado; §10.4 mostra que é pior que inútil)</label>
-      <div class="legend" style="margin-top:8px"><span><i style="background:var(--accent)"></i>separabilidade d′ por feature</span></div>
-      <canvas class="chart" id="sn-cd" style="height:118px"></canvas>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--accent)"></i>densidade de separação f_G × f_I e áreas de erro</span></div>
+      <canvas class="chart" id="sn-cd" style="height:126px"></canvas>
+      <div class="ctrl" style="margin-top:6px">
+        <label for="sn-dp-range"><span>Sensibilidade discriminante d′ (separabilidade)</span><b id="sn-dp-v">d′ = 1,50 · EER = 22,7%</b></label>
+        <input type="range" id="sn-dp-range" min="0.5" max="3.5" step="0.1" value="1.5">
+      </div>
       <div class="legend" style="margin-top:8px"><span><i style="background:var(--good)"></i>|z_u| ao titular (menor = mais próximo)</span><span><i style="background:var(--bad)"></i>|z_I| ao prior/coorte</span></div>
       <canvas class="chart" id="sn-zchart" style="height:118px"></canvas>
     </div>
@@ -687,6 +699,7 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
         <div class="legend" style="margin:2px 0 0"><span><i style="background:var(--good)"></i>trajetória dono</span><span><i style="background:var(--bad)"></i>trajetória impostor</span><span><i style="background:var(--info)"></i>parede ln B_r</span><span><i style="background:var(--warn)"></i>teto CUSUM h</span></div>
       </div>
     </div>
+    <button type="button" class="btn sm ghost" id="lv-goto-sm" style="margin-top:10px;width:100%">Ver Máquina de Estados da Sessão Completa (§22) →</button>
   </div>
 
   <div class="card">
@@ -814,19 +827,21 @@ dialog.guide{max-width:min(540px,calc(100vw - 20px));max-height:min(88dvh,740px)
 
 <dialog id="guide-dialog" class="guide" closedby="any" aria-labelledby="guide-title">
   <div class="guide-sheet">
-    <div class="guide-head">
-      <div>
-        <span class="kicker">Guia interativo · Preprint v9</span>
-        <h2 id="guide-title">Como usar o IMU Auth</h2>
+    <div class="guide-header-sticky">
+      <div class="guide-head">
+        <div>
+          <span class="kicker">Guia interativo · Preprint v9</span>
+          <h2 id="guide-title">Como usar o IMU Auth</h2>
+        </div>
+        <button type="button" class="guide-close" id="guide-x" aria-label="Fechar guia">✕</button>
       </div>
-      <button type="button" class="guide-close" id="guide-x" aria-label="Fechar guia">✕</button>
-    </div>
 
-    <div class="guide-nav" role="tablist" aria-label="Etapas do guia">
-      <button type="button" role="tab" aria-selected="true" data-gstep="0">1. Visão geral</button>
-      <button type="button" role="tab" aria-selected="false" data-gstep="1">2. Coleta IMU</button>
-      <button type="button" role="tab" aria-selected="false" data-gstep="2">3. Ao vivo</button>
-      <button type="button" role="tab" aria-selected="false" data-gstep="3">4. Indicadores</button>
+      <div class="guide-nav" role="tablist" aria-label="Etapas do guia">
+        <button type="button" role="tab" aria-selected="true" data-gstep="0">1. Visão geral</button>
+        <button type="button" role="tab" aria-selected="false" data-gstep="1">2. Coleta IMU</button>
+        <button type="button" role="tab" aria-selected="false" data-gstep="2">3. Ao vivo</button>
+        <button type="button" role="tab" aria-selected="false" data-gstep="3">4. Indicadores</button>
+      </div>
     </div>
 
     <!-- Passo 1: Visão geral -->
@@ -1323,6 +1338,7 @@ const AuthEngine = (() => {
     TESTS, runTests,
   };
 })();
+if (typeof window !== 'undefined') window.AuthEngine = AuthEngine;
 if (typeof module !== 'undefined') module.exports = AuthEngine;
 
 </script>
@@ -1387,8 +1403,13 @@ const View3D = (() => {
       if (st.last) draw(canvas, st, st.last);
     };
     const onUp = e => {
-      if (downPos && Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) < 6 && ((typeof performance !== 'undefined' ? performance.now() : Date.now()) - downPos.t) < 320) {
-        triggerRipple(0, -0.15);
+      if (downPos && Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) < 8 && ((typeof performance !== 'undefined' ? performance.now() : Date.now()) - downPos.t) < 360) {
+        const rect = canvas.getBoundingClientRect();
+        const rx = (e.clientX - rect.left) / Math.max(1, rect.width) - 0.5;
+        const ry = (e.clientY - rect.top) / Math.max(1, rect.height) - 0.5;
+        const u = Math.max(-0.85, Math.min(0.85, rx * 2.4));
+        const v = Math.max(-0.85, Math.min(0.85, -ry * 2.4));
+        triggerRipple(u, v);
       }
       downPos = null;
       if (st.drag && st.drag.id != null) { try { if (canvas.releasePointerCapture) canvas.releasePointerCapture(st.drag.id); } catch {} }
@@ -2202,18 +2223,18 @@ const Recorder = (() => {
     const cusumH = hlinesList.find(l => l.label === 'h' || (l.label && l.label.includes('h=')));
     let cusumAlarm = false;
     if (cusumSeries && cusumH) {
-      const maxC = Math.max(0, ...cusumSeries.data.filter(Number.isFinite));
+      const curC = [...cusumSeries.data].reverse().find(v => v != null && Number.isFinite(v)) ?? 0;
       const targetH = cusumH.y;
-      if (maxC >= 0.65 * targetH) {
-        const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 260);
-        const intensity = Math.min(1, (maxC - 0.65 * targetH) / (0.35 * targetH));
-        const alpha = (0.08 + 0.12 * pulse) * intensity;
+      if (curC >= 0.65 * targetH) {
+        const pulse = 0.5 + 0.5 * Math.sin((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 220);
+        const intensity = Math.min(1, (curC - 0.65 * targetH) / (0.35 * targetH));
+        const alpha = (0.10 + 0.14 * pulse) * intensity;
         const grad = ctx.createLinearGradient(0, padT, 0, Y(targetH));
-        grad.addColorStop(0, `rgba(248,113,113,${alpha * 1.6})`);
-        grad.addColorStop(1, `rgba(251,191,36,${alpha * 0.3})`);
+        grad.addColorStop(0, `rgba(248,113,113,${alpha * 1.8})`);
+        grad.addColorStop(1, `rgba(251,191,36,${alpha * 0.4})`);
         ctx.fillStyle = grad;
         ctx.fillRect(padL, padT, w - padL - padR, Math.max(0, Y(targetH) - padT));
-        if (maxC >= targetH) cusumAlarm = true;
+        if (curC >= targetH) cusumAlarm = true;
       }
     }
 
@@ -2236,12 +2257,16 @@ const Recorder = (() => {
         if (isMoney) {
           ctx.font = '700 9.5px ' + cssVar('--mono');
           const tw = ctx.measureText(l.label).width + 10;
-          const tx = w - padR - tw - 2, ty = Math.max(padT + 1, yVal - 8);
-          ctx.fillStyle = toRgba(l.color, 0.18);
+          let tx;
+          if (l.label.includes('50 mil')) tx = padL + 8;
+          else if (l.label.includes('5 mil')) tx = Math.round(padL + (w - padL - padR) * 0.46 - tw / 2);
+          else tx = w - padR - tw - 2;
+          const ty = Math.max(padT + 1, Math.min(h - padB - 17, yVal - 8));
+          ctx.fillStyle = toRgba(l.color, 0.22);
           ctx.beginPath();
           if (ctx.roundRect) ctx.roundRect(tx, ty, tw, 15, 4); else ctx.rect(tx, ty, tw, 15);
           ctx.fill();
-          ctx.strokeStyle = l.color; ctx.lineWidth = 0.8; ctx.stroke();
+          ctx.strokeStyle = l.color; ctx.lineWidth = 0.9; ctx.stroke();
           ctx.fillStyle = l.color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(l.label, tx + tw / 2, ty + 7.5);
         } else {
@@ -2249,6 +2274,24 @@ const Recorder = (() => {
           ctx.fillStyle = l.color; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
           ctx.fillText(l.label, w - padR - 2, Math.max(padT + 9, yVal - 4));
         }
+      }
+    }
+
+    // Áreas de caudas sombreadas (alfa e beta em densidades de separabilidade)
+    if (cfg.shadedTails) {
+      for (const tail of cfg.shadedTails) {
+        ctx.save(); ctx.beginPath();
+        let pen = false;
+        const i0 = Math.max(0, tail.fromIdx), i1 = Math.min(n - 1, tail.toIdx);
+        for (let i = i0; i <= i1; i++) {
+          const v = tail.data[i]; if (v == null || !Number.isFinite(v)) continue;
+          if (!pen) { ctx.moveTo(X(i), Y(v)); pen = true; } else ctx.lineTo(X(i), Y(v));
+        }
+        if (pen) {
+          ctx.lineTo(X(i1), Y(lo)); ctx.lineTo(X(i0), Y(lo)); ctx.closePath();
+          ctx.fillStyle = tail.color; ctx.fill();
+        }
+        ctx.restore();
       }
     }
 
@@ -2290,7 +2333,7 @@ const Recorder = (() => {
             lastI = i;
           }
           if (firstI >= 0 && lastI > firstI) {
-            const baseY = Y(lo < 0 && hi > 0 ? 0 : lo);
+            const baseY = s.fillBase != null ? Y(s.fillBase) : Y(lo < 0 && hi > 0 ? 0 : lo);
             ctx.lineTo(X(lastI), baseY); ctx.lineTo(X(firstI), baseY); ctx.closePath();
             const grad = ctx.createLinearGradient(0, padT, 0, h - padB);
             grad.addColorStop(0, toRgba(col, s.fillAlphaTop || 0.28));
@@ -2477,6 +2520,7 @@ const Recorder = (() => {
     liveRender();
   }
   function liveExec(a) {
+    if (sceneLive && sceneLive.triggerRipple) sceneLive.triggerRipple(0, 0.05);
     const d = E.decideAction(live.s, live.p, a.L), imp = live.s.holder === 'impostor';
     if (d.code === 'revoked') { addLog(`${a.name}: bloqueada, sessão já revogada.`, 'warn'); liveRender(); return; }
     if (d.ok) { if (imp) { live.outcomes.loss++; addLog(`${a.name} executada pelo IMPOSTOR: perda.`, 'bad'); } else addLog(`${a.name} executada pelo dono sem fricção.`, 'good'); }
@@ -2528,7 +2572,7 @@ const Recorder = (() => {
     chart($('#lv-c1'), { n, xLabels: xl, zones, vlines, series: [{ type: 'bar', name: 'ℓ_k', data: padArr(H.map(h => h.l)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { name: 'Λ', data: padArr(H.map(h => h.Lambda)), color: info }], hlines: [{ y: E.lnB(live.s.r), color: info, label: 'ln B_r' }, { y: E.lnA(live.s.r), color: warn, label: 'ln A' }], yMin: -5, yMax: 6 });
     chart($('#lv-c2'), { n, xLabels: xl, zones, vlines, series: [{ name: 'C', data: padArr(H.map(h => h.C)), color: warn }], hlines: [{ y: live.p.h, color: bad, label: 'h' }], yMin: 0, yMax: live.p.h * 1.1, hardMin: true });
     const thr = L => Math.log10(E.phiThreshold(live.p, L));
-    chart($('#lv-c3'), { n, xLabels: xl, zones, vlines, series: [{ name: 'log₁₀ φ', data: padArr(H.map(h => h.phi > 0 ? Math.log10(h.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
+    chart($('#lv-c3'), { n, xLabels: xl, zones, vlines, series: [{ name: 'log₁₀ φ', data: padArr(H.map(h => h.phi > 0 ? Math.log10(h.phi) : NaN)), color: violet, fillBase: -8, fillAlphaTop: 0.32, fillAlphaMid: 0.10 }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
     renderLiveFlowAndPhase();
   }
   function renderLiveFlowAndPhase() {
@@ -2663,6 +2707,14 @@ const Recorder = (() => {
   $('#lv-handoff').addEventListener('click', () => { if (live.s.holder === 'impostor') return; live.s = E.handoff(live.s); addLog('Troca de posse: outra pessoa segura o aparelho (o sistema não é avisado).', 'bad'); liveRender(); });
   $('#lv-back').addEventListener('click', () => { if (live.s.holder !== 'impostor') return; live.s = { ...live.s, holder: 'owner', events: [] }; addLog('Dono retoma o aparelho; a evidência acumulada contra ele permanece até ser diluída.', 'warn'); liveRender(); });
   $('#lv-strong').addEventListener('click', () => { live.s = E.strongFactor({ ...live.s, holder: 'owner' }); addLog('Fator forte aprovado pelo dono: nova sessão (Λ, C, φ, S e orçamento de α reiniciados).', 'good'); liveRender(); });
+  const lvGotoSm = $('#lv-goto-sm');
+  if (lvGotoSm) {
+    lvGotoSm.addEventListener('click', () => {
+      showTab('docs');
+      const b4 = $('#dc-box-fig4');
+      if (b4) b4.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
 
   /* controles */
   const CONTROLS = [
@@ -2738,12 +2790,12 @@ const Recorder = (() => {
   $('#sn-tremor').addEventListener('change', e => { lab.useTremor = e.target.checked; snRender(); });
   $('#sn-haptic').addEventListener('click', () => { if (!lab.hapticPulse(46)) $('#sn-haptic-txt').textContent = 'navigator.vibrate indisponível (iOS/Safari não expõe; no Android ative os sensores primeiro).'; else $('#sn-haptic-txt').textContent = 'pulso disparado; medindo envelope…'; });
   $('#sn-csv').addEventListener('click', () => downloadFile(new Blob([lab.csv()], { type: 'text/csv;charset=utf-8' }), `janelas_imu_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`));
-  $('#sn-tap').addEventListener('pointerdown', () => { if (!lab.running) { $('#sn-h9-last').textContent = 'ative os sensores primeiro'; return; } lab.onTouch(); });
+  $('#sn-tap').addEventListener('pointerdown', () => { if (!lab.running) { $('#sn-h9-last').textContent = 'ative os sensores primeiro'; return; } lab.onTouch(); if (sceneSn && sceneSn.triggerRipple) sceneSn.triggerRipple(0, -0.2); });
 
   function snRenderSignals() {
     if (currentTab !== 'sensor') return;
     const n = 100, pad = n - sn.strip.length, P = a => Array(pad).fill(null).concat(a);
-    chart($('#sn-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ data: P(sn.strip.map(s => s.a)), color: cssVar('--info') }, { data: P(sn.strip.map(s => s.w)), color: cssVar('--warn') }], yMin: 0 });
+    chart($('#sn-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ name: '|a_lin|', data: P(sn.strip.map(s => s.a)), color: cssVar('--info'), fillAlphaTop: 0.18, fillAlphaMid: 0.05 }, { name: '|ω|', data: P(sn.strip.map(s => s.w)), color: cssVar('--warn'), fillAlphaTop: 0.14, fillAlphaMid: 0.04 }], yMin: 0 });
   }
   function snRender() {
     if (currentTab !== 'sensor') return;
@@ -2773,8 +2825,19 @@ const Recorder = (() => {
       ['garantia de Ville', lab.cohort ? 'só com população medida e LLR calibrado (H7)' : 'NÃO vale: f_I é prior declarado'],
     ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if ($('#sn-cd')) {
-      const dPrime = dp ? dp.total : 1.5;
-      const nPts = 45;
+      const rngEl = $('#sn-dp-range');
+      let dPrime = lab._customDp != null ? lab._customDp : (dp ? dp.total : 1.5);
+      if (rngEl && document.activeElement !== rngEl && lab._customDp == null && dp) {
+        rngEl.value = dp.total.toFixed(1);
+      }
+      if (rngEl && !rngEl._wired) {
+        rngEl._wired = true;
+        rngEl.addEventListener('input', e => {
+          lab._customDp = +e.target.value;
+          snRender();
+        });
+      }
+      const nPts = 51;
       const xs = Array.from({ length: nPts }, (_, i) => -4.5 + (9 / (nPts - 1)) * i);
       const halfD = dPrime / 2;
       const normPdf = (x, m) => +( (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * (x - m) ** 2) ).toFixed(4);
@@ -2782,22 +2845,23 @@ const Recorder = (() => {
       const dataI = xs.map(x => normPdf(x, -halfD));
       const eer = +(100 * E.Phi(-halfD)).toFixed(1);
       const splitIdx = Math.round((4.5 / 9) * (nPts - 1));
+      if ($('#sn-dp-v')) $('#sn-dp-v').textContent = `d′ = ${dPrime.toFixed(2).replace('.', ',')} · EER = ${eer}%`;
       chart($('#sn-cd'), {
         n: nPts, yMin: 0, yMax: 0.46,
-        xLabels: [[0, 'z=−4,5'], [Math.round(splitIdx / 2), 'impostor'], [splitIdx, 'z=0 (corte)'], [Math.round((splitIdx + nPts) / 2), 'titular'], [nPts - 1, 'z=+4,5']],
+        xLabels: [[0, 'z=−4,5'], [Math.round(splitIdx / 2), 'impostor f_I'], [splitIdx, 'z=0 (corte)'], [Math.round((splitIdx + nPts) / 2), 'titular f_G'], [nPts - 1, 'z=+4,5']],
         vlines: [{ x: splitIdx, color: cssVar('--fg'), label: `corte z=0 (EER=${eer}%)` }],
-        zones: [
-          { x0: splitIdx, x1: nPts - 1, color: 'rgba(239, 68, 68, 0.12)' },
-          { x0: 0, x1: splitIdx, color: 'rgba(34, 197, 94, 0.10)' },
+        shadedTails: [
+          { fromIdx: 0, toIdx: splitIdx, data: dataG, color: 'rgba(245, 158, 11, 0.28)' },
+          { fromIdx: splitIdx, toIdx: nPts - 1, data: dataI, color: 'rgba(239, 68, 68, 0.28)' },
         ],
         series: [
-          { name: `Titular f_G (d′=${dPrime.toFixed(2)})`, data: dataG, color: cssVar('--good'), fill: true, fillAlphaTop: 0.28 },
-          { name: 'Impostor f_I (prior)', data: dataI, color: cssVar('--bad'), fill: true, fillAlphaTop: 0.24 },
+          { name: `Titular f_G (d′=${dPrime.toFixed(2)})`, data: dataG, color: cssVar('--good'), fill: true, fillAlphaTop: 0.20, fillAlphaMid: 0.04 },
+          { name: 'Impostor f_I (prior)', data: dataI, color: cssVar('--bad'), fill: true, fillAlphaTop: 0.20, fillAlphaMid: 0.04 },
         ],
       });
       const leg = $('#sn-cd').previousElementSibling;
       if (leg && leg.classList.contains('legend')) {
-        leg.innerHTML = `<span><i style="background:var(--good)"></i>Titular f_G (α=${eer}%)</span><span><i style="background:var(--bad)"></i>Impostor f_I (β=${eer}%)</span><span><b style="color:var(--accent)">d′ = ${dPrime.toFixed(2)}</b> (${dPrime >= 2.0 ? 'separação alta' : dPrime >= 1.4 ? 'moderada' : 'baixa'})</span>`;
+        leg.innerHTML = `<span><i style="background:var(--good)"></i>Titular f_G</span><span><i style="background:rgba(245,158,11,0.85)"></i>Falso Alarme α (${eer}%)</span><span><i style="background:rgba(239,68,68,0.85)"></i>Falsa Aceitação β (${eer}%)</span><span><i style="background:var(--bad)"></i>Impostor f_I</span><span><b style="color:var(--accent)">d′ = ${dPrime.toFixed(2)}</b></span>`;
       }
     }
     // gráfico PSD da janela (ou espectro de referência ilustrativo quando sem amostras)
@@ -2866,7 +2930,7 @@ const Recorder = (() => {
     chart($('#sn-c1'), { n, xLabels: xl, zones, series: [{ type: 'bar', name: 'ℓ_k', data: P(W.map(x => x.q ? clampL(x.l) : NaN)), color: v => v >= 0 ? good : bad, missing: muted + '55' }, { name: 'Λ', data: P(W.map(x => Math.max(-20, x.session.Lambda))), color: info }], hlines: [{ y: E.lnB(s.r), color: info, label: 'ln B_r' }], yMin: -6, yMax: 6 });
     chart($('#sn-c2'), { n, xLabels: xl, zones, series: [{ name: 'C', data: P(W.map(x => x.session.C)), color: warn }], hlines: [{ y: lab.p.h, color: bad, label: 'h' }], yMin: 0, yMax: lab.p.h * 1.1, hardMin: true });
     const thr = L => Math.log10(E.phiThreshold(lab.p, L));
-    chart($('#sn-c3'), { n, xLabels: xl, zones, series: [{ name: 'log₁₀ φ', data: P(W.map(x => x.session.phi > 0 ? Math.log10(x.session.phi) : NaN)), color: violet }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
+    chart($('#sn-c3'), { n, xLabels: xl, zones, series: [{ name: 'log₁₀ φ', data: P(W.map(x => x.session.phi > 0 ? Math.log10(x.session.phi) : NaN)), color: violet, fillBase: -8, fillAlphaTop: 0.32, fillAlphaMid: 0.10 }], hlines: [{ y: thr(50), color: good, label: 'R$ 50' }, { y: thr(5000), color: warn, label: 'R$ 5 mil' }, { y: thr(50000), color: bad, label: 'R$ 50 mil' }], yMin: -8, yMax: 1, hardMin: true, hardMax: true, fmt: v => '10' + sup(Math.round(v)) });
   }
 
   /* ============================================================ COLETAR ============================================================ */
@@ -3028,7 +3092,7 @@ const Recorder = (() => {
   function clSignals() {
     if (currentTab !== 'collect') return;
     const n = 100, pad = n - sn.strip.length, P = a => Array(pad).fill(null).concat(a);
-    chart($('#cl-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ name: '|a_lin|', data: P(sn.strip.map(s => s.a)), color: cssVar('--info') }, { name: '|ω|', data: P(sn.strip.map(s => s.w)), color: cssVar('--warn') }], yMin: 0 });
+    chart($('#cl-c0'), { n, xLabels: [[0, '−10 s'], [n - 1, 'agora']], series: [{ name: '|a_lin|', data: P(sn.strip.map(s => s.a)), color: cssVar('--info'), fillAlphaTop: 0.18, fillAlphaMid: 0.05 }, { name: '|ω|', data: P(sn.strip.map(s => s.w)), color: cssVar('--warn'), fillAlphaTop: 0.14, fillAlphaMid: 0.04 }], yMin: 0 });
     $('#cl-sig-note').textContent = lab.running ? (lab.noGyro ? 'sem giroscópio' : '') : 'sensores parados';
     clTimeline();
   }
@@ -3337,6 +3401,8 @@ const Recorder = (() => {
     // Fig. 4 · Máquina de Estados da Sessão Sequencial (§7, §9.3, §16, §22)
     const svg4 = $('#dc-fig4-svg');
     if (svg4) {
+      if (typeof window._currentSmKey === 'undefined') window._currentSmKey = 's1';
+      const k = window._currentSmKey;
       svg4.innerHTML = `
         <defs>
           <marker id="sm-arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--muted)"/></marker>
@@ -3345,13 +3411,15 @@ const Recorder = (() => {
           <marker id="sm-arr-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--bad)"/></marker>
           <marker id="sm-arr-i" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--info)"/></marker>
         </defs>
-        <g font-family="var(--sans)" font-size="10" cursor="pointer">
+        <g font-family="var(--sans)" font-size="10">
           <!-- Transição loop renovação Ville -->
-          <path d="M 45 68 C 45 22, 95 22, 95 68" fill="none" stroke="var(--good)" stroke-width="1.8" marker-end="url(#sm-arr-g)" data-sm="renov"/>
-          <text x="70" y="24" text-anchor="middle" font-size="9" font-weight="700" fill="var(--good)" data-sm="renov">Renovação Ville Λ ≥ ln B_r</text>
+          <g data-sm="renov" class="${k === 'renov' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Transição: Renovação de Ville">
+            <path d="M 45 68 C 45 22, 95 22, 95 68" fill="none" stroke="var(--good)" stroke-width="1.8" marker-end="url(#sm-arr-g)"/>
+            <text x="70" y="24" text-anchor="middle" font-size="9" font-weight="700" fill="var(--good)">Renovação Ville Λ ≥ ln B_r</text>
+          </g>
 
           <!-- Nó 1: Ativo -->
-          <g data-sm="s1">
+          <g data-sm="s1" class="${k === 's1' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Estado 1: Ativo / Íntegro">
             <rect x="18" y="72" width="108" height="64" rx="10" fill="var(--panel2)" stroke="var(--good)" stroke-width="2"/>
             <text x="72" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--fg)">1. ATIVO</text>
             <text x="72" y="109" text-anchor="middle" font-size="9" fill="var(--muted)">Sessão íntegra</text>
@@ -3359,15 +3427,19 @@ const Recorder = (() => {
           </g>
 
           <!-- Transição Ativo -> Suspeita -->
-          <path d="M 126 92 L 150 92" fill="none" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#sm-arr-w)" data-sm="s2"/>
-          <text x="138" y="85" text-anchor="middle" font-size="8.5" fill="var(--warn)" data-sm="s2">ℓ_k &lt; 0</text>
+          <g data-sm="s2" class="${k === 's2' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Transição: Evidência Adversa ℓ_k &lt; 0">
+            <path d="M 126 92 L 150 92" fill="none" stroke="var(--warn)" stroke-width="1.8" marker-end="url(#sm-arr-w)"/>
+            <text x="138" y="85" text-anchor="middle" font-size="8.5" fill="var(--warn)">ℓ_k &lt; 0</text>
+          </g>
 
           <!-- Transição Suspeita -> Ativo (retomada) -->
-          <path d="M 152 118 L 128 118" fill="none" stroke="var(--good)" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#sm-arr-g)" data-sm="s1"/>
-          <text x="140" y="130" text-anchor="middle" font-size="8.5" fill="var(--good)" data-sm="s1">retoma</text>
+          <g data-sm="s1" tabindex="0" role="button" aria-label="Transição: Retomada pelo Dono">
+            <path d="M 152 118 L 128 118" fill="none" stroke="var(--good)" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#sm-arr-g)"/>
+            <text x="140" y="130" text-anchor="middle" font-size="8.5" fill="var(--good)">retoma</text>
+          </g>
 
           <!-- Nó 2: Suspeita -->
-          <g data-sm="s2">
+          <g data-sm="s2" class="${k === 's2' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Estado 2: Suspeita / Evidência Adversa">
             <rect x="154" y="72" width="108" height="64" rx="10" fill="var(--panel2)" stroke="var(--warn)" stroke-width="1.8"/>
             <text x="208" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--fg)">2. SUSPEITA</text>
             <text x="208" y="109" text-anchor="middle" font-size="9" fill="var(--muted)">Troca de mãos?</text>
@@ -3375,11 +3447,13 @@ const Recorder = (() => {
           </g>
 
           <!-- Transição Suspeita -> Step-Up (CUSUM ou valor) -->
-          <path d="M 262 104 L 286 104" fill="none" stroke="var(--bad)" stroke-width="2" marker-end="url(#sm-arr-b)" data-sm="cusum"/>
-          <text x="274" y="97" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--bad)" data-sm="cusum">C &gt; h</text>
+          <g data-sm="cusum" class="${k === 'cusum' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Transição: Alarme CUSUM C &gt; h">
+            <path d="M 262 104 L 286 104" fill="none" stroke="var(--bad)" stroke-width="2" marker-end="url(#sm-arr-b)"/>
+            <text x="274" y="97" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--bad)">C &gt; h</text>
+          </g>
 
           <!-- Nó 3: Step-Up -->
-          <g data-sm="s3">
+          <g data-sm="s3" class="${k === 's3' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Estado 3: Step-Up Face ID / PIN">
             <rect x="290" y="72" width="112" height="64" rx="10" fill="var(--panel2)" stroke="var(--info)" stroke-width="2"/>
             <text x="346" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--fg)">3. STEP-UP</text>
             <text x="346" y="109" text-anchor="middle" font-size="9" fill="var(--info)">Face ID / PIN</text>
@@ -3387,15 +3461,19 @@ const Recorder = (() => {
           </g>
 
           <!-- Retorno Step-Up -> Ativo (dono aprovado) -->
-          <path d="M 346 136 C 346 195, 72 195, 72 138" fill="none" stroke="var(--good)" stroke-width="1.8" marker-end="url(#sm-arr-g)" data-sm="s1"/>
-          <text x="208" y="185" text-anchor="middle" font-size="9" font-weight="600" fill="var(--good)" data-sm="s1">Dono aprovado: C ← 0, φ ← 0, retorna a Ativo</text>
+          <g data-sm="s1" tabindex="0" role="button" aria-label="Retorno: Dono aprovado no Step-Up">
+            <path d="M 346 136 C 346 195, 72 195, 72 138" fill="none" stroke="var(--good)" stroke-width="1.8" marker-end="url(#sm-arr-g)"/>
+            <text x="208" y="185" text-anchor="middle" font-size="9" font-weight="600" fill="var(--good)">Dono aprovado: C ← 0, φ ← 0, retorna a Ativo</text>
+          </g>
 
           <!-- Transição Step-Up -> Revogado -->
-          <path d="M 402 104 L 430 104" fill="none" stroke="var(--bad)" stroke-width="1.8" marker-end="url(#sm-arr-b)" data-sm="s4"/>
-          <text x="416" y="97" text-anchor="middle" font-size="8.5" fill="var(--bad)" data-sm="s4">falha</text>
+          <g data-sm="s4" class="${k === 's4' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Transição: Falha no Step-Up">
+            <path d="M 402 104 L 430 104" fill="none" stroke="var(--bad)" stroke-width="1.8" marker-end="url(#sm-arr-b)"/>
+            <text x="416" y="97" text-anchor="middle" font-size="8.5" fill="var(--bad)">falha</text>
+          </g>
 
           <!-- Nó 4: Revogado -->
-          <g data-sm="s4">
+          <g data-sm="s4" class="${k === 's4' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Estado 4: Bloqueio / Sessão Revogada">
             <rect x="434" y="72" width="88" height="64" rx="10" fill="var(--panel2)" stroke="var(--bad)" stroke-width="2"/>
             <text x="478" y="93" text-anchor="middle" font-weight="700" font-size="11" fill="var(--bad)">4. BLOQUEIO</text>
             <text x="478" y="109" text-anchor="middle" font-size="9" fill="var(--muted)">Revogado</text>
@@ -3403,8 +3481,10 @@ const Recorder = (() => {
           </g>
 
           <!-- Portão Ancilar físico q_k loop à esquerda -->
-          <path d="M 18 104 C -6 104, -6 130, 16 126" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#sm-arr)" data-sm="ancilar"/>
-          <text x="14" y="148" font-size="8.5" fill="var(--muted)" data-sm="ancilar">q_k = 0 (mesa)</text>
+          <g data-sm="ancilar" class="${k === 'ancilar' ? 'sm-active' : ''}" tabindex="0" role="button" aria-label="Portão Ancilar q_k">
+            <path d="M 18 104 C -6 104, -6 130, 16 126" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#sm-arr)"/>
+            <text x="14" y="148" font-size="8.5" fill="var(--muted)">q_k = 0 (mesa)</text>
+          </g>
         </g>
       `;
       const updateDetail = key => {
@@ -3415,11 +3495,16 @@ const Recorder = (() => {
           det.innerHTML = `<b>${item.title}</b><div style="font-family:var(--mono);font-size:.78rem;margin:3px 0 2px;color:var(--fg)">${esc(item.eq)}</div><div>${item.desc}</div>`;
         }
       };
+      updateDetail(window._currentSmKey);
       $$('[data-sm]', svg4).forEach(el => {
-        el.addEventListener('click', e => {
+        const onActivate = e => {
           e.stopPropagation();
-          updateDetail(el.dataset.sm);
-        });
+          window._currentSmKey = el.dataset.sm;
+          updateDetail(window._currentSmKey);
+          $$('[data-sm]', svg4).forEach(x => x.classList.toggle('sm-active', x.dataset.sm === window._currentSmKey));
+        };
+        el.addEventListener('click', onActivate);
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(e); } });
       });
     }
 
@@ -3427,23 +3512,50 @@ const Recorder = (() => {
     const cv5 = $('#dc-fig5-cv');
     if (cv5) {
       const mode = ($('#dc-f5-gate') && $('#dc-f5-gate').value) || 'ancilar';
-      const nSteps = 28;
+      const nSteps = 30;
       const lnBound = Math.log(1000); // 6.9077 nats (teto ln(1000))
-      let dataLam = [], faTxt = '';
+      let dataLam = [], driftTh = [], faTxt = '';
+      const rng = E.makeRng(20261025 + (mode === 'ancilar' ? 101 : mode === 'score_05' ? 202 : 303));
+      const dP = 1.5, mu = (dP * dP) / 2, sg = Math.sqrt(2 * mu);
+      let curLam = 0;
+      dataLam.push(0);
+      driftTh.push(0);
+      let stepMean = 0;
       if (mode === 'ancilar') {
-        faTxt = 'Portão Ancilar q_k (v9) → FA = 3,9×10⁻⁴ (seguro)';
-        dataLam = Array.from({ length: nSteps }, (_, i) => +(0 - (i * 0.55) + 0.3 * Math.sin(i * 1.2)).toFixed(2));
+        faTxt = 'Portão Ancilar q_k (v9) → FA = 3,9×10⁻⁴ (seguro · Prop. 1)';
+        stepMean = -mu * 0.85;
+        for (let k = 1; k < nSteps; k++) {
+          const q = rng.uniform() > 0.15 ? 1 : 0;
+          const l = -mu + sg * rng.gaussian();
+          if (q) curLam += l;
+          dataLam.push(+curLam.toFixed(2));
+          driftTh.push(+(k * stepMean).toFixed(2));
+        }
       } else if (mode === 'score_05') {
-        faTxt = 'Erro C6 (ℓ > −0,5) → FA = 0,9998 (colapso 99,98%)';
-        dataLam = Array.from({ length: nSteps }, (_, i) => +(Math.min(9.5, 0.4 + i * 0.48 + 0.2 * Math.cos(i))).toFixed(2));
+        faTxt = 'Erro C6 (descarta ℓ < −0,5) → FA = 0,9998 (colapso da martingale)';
+        stepMean = +0.48;
+        for (let k = 1; k < nSteps; k++) {
+          let l;
+          do { l = -mu + sg * rng.gaussian(); } while (l < -0.5);
+          curLam = Math.min(10.5, curLam + l);
+          dataLam.push(+curLam.toFixed(2));
+          driftTh.push(+(Math.min(10, k * stepMean)).toFixed(2));
+        }
       } else {
-        faTxt = 'Erro C6 Severo (ℓ > 0) → FA = 1,0000 (100% falha)';
-        dataLam = Array.from({ length: nSteps }, (_, i) => +(Math.min(9.5, 0.8 + i * 0.72)).toFixed(2));
+        faTxt = 'Erro C6 Severo (descarta ℓ < 0) → FA = 1,0000 (100% falha)';
+        stepMean = +0.85;
+        for (let k = 1; k < nSteps; k++) {
+          let l;
+          do { l = -mu + sg * rng.gaussian(); } while (l < 0);
+          curLam = Math.min(10.5, curLam + l);
+          dataLam.push(+curLam.toFixed(2));
+          driftTh.push(+(Math.min(10, k * stepMean)).toFixed(2));
+        }
       }
       if ($('#dc-f5-gate-v')) $('#dc-f5-gate-v').textContent = faTxt;
       chart(cv5, {
         n: nSteps, yMin: -10, yMax: 10,
-        xLabels: [[0, 'passo 0'], [7, 'passo 7'], [14, 'passo 14'], [21, 'passo 21'], [27, 'passo 27']],
+        xLabels: [[0, 'passo 0'], [7, 'passo 7'], [14, 'passo 14'], [21, 'passo 21'], [nSteps - 1, `passo ${nSteps - 1}`]],
         hlines: [
           { y: 0, color: cssVar('--muted'), label: 'Λ = 0' },
           { y: lnBound, color: cssVar('--bad'), label: 'ln(10³) = 6,91' },
@@ -3452,7 +3564,8 @@ const Recorder = (() => {
           { idx0: 0, idx1: nSteps - 1, color: mode === 'ancilar' ? 'rgba(34, 197, 94, 0.06)' : 'rgba(239, 68, 68, 0.10)' }
         ],
         series: [
-          { name: mode === 'ancilar' ? 'Trajetória sob q_k ancilar (Ville preservado)' : 'Trajetória com corte por escore (Violação C6)', data: dataLam, color: mode === 'ancilar' ? cssVar('--good') : cssVar('--bad'), fill: true },
+          { name: mode === 'ancilar' ? 'Trajetória sob q_k ancilar (Ville preservado)' : 'Trajetória com corte por escore (Violação C6)', data: dataLam, color: mode === 'ancilar' ? cssVar('--good') : cssVar('--bad'), fill: true, fillAlphaTop: mode === 'ancilar' ? 0.20 : 0.28 },
+          { name: 'Deriva Teórica E[Λ_k]', data: driftTh, color: mode === 'ancilar' ? cssVar('--accent') : cssVar('--warn'), dash: [4, 3], glow: false },
         ],
       });
     }
